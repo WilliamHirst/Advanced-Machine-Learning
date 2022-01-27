@@ -7,11 +7,9 @@ import pandas as pd
     
  
 class SupervisedSolver:
-    def __init__(self, datafile):
-        self.datafile = datafile
-        self.dataframe = pd.read_csv(self.datafile)
+    def __init__(self):
+        self.dataframe = np.load("../Data/data.npy")
         self.length_frame = len(self.dataframe)
-        
         
     def setup_model(self):
         return 0
@@ -37,9 +35,8 @@ class SupervisedSolver:
     
 
 if __name__ == "__main__":
-    
-    
     # Place tensors on the CPU
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-        ML = SupervisedSolver("../Data/training.csv")
+        ML = SupervisedSolver()
         print(ML.length_frame)
+    
