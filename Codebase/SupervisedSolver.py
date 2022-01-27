@@ -12,8 +12,34 @@ class SupervisedSolver:
         self.dataframe = pd.read_csv(self.datafile)
         self.length_frame = len(self.dataframe)
         
+        
+    def setup_model(self):
+        return 0
+    
+    def train(self):
+        return 0
+    
+    def predict(self): 
+        return 0
+
+    def save_model(self, name):
+        self.model.save(f"tf_models/model_{name}.h5")
+
+    def load_model(self, name):
+        self.model = tf.keras.models.load_model(f"tf_models/model_{name}.h5")
+
+    def save_checkpoint(self, checkpoint_name):
+        self.model.save_weights(f"checkpoints/{checkpoint_name}")
+
+    def load_from_checkpoint(self, checkpoint_name):
+        self.model.load_weights(f"tf_checkpoints/{checkpoint_name}")
+        
     
 
 if __name__ == "__main__":
-    ss = SupervisedSolver("../Data/training.csv")
-    print(ss.length_frame)
+    
+    
+    # Place tensors on the CPU
+    with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+        ML = SupervisedSolver("../Data/training.csv")
+        print(ML.length_frame)
