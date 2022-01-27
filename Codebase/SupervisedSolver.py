@@ -6,13 +6,16 @@ from tensorflow.keras.layers import Dense, Input
 
 class SupervisedSolver:
     def __init__(self, datafile):
-        data = reafFile(datafile)
+        self.datafile = datafile
+        self.data = self.readFile(self.datafile)
 
 
-    def readFile():
+    def readFile(self, datafile):
         file = open(datafile, 'r')
-        print(len(file.readline().split(",")))
-        return data
+        self.number_of_categories = len(file.readline().split(","))
+        print(self.number_of_categories)
+        
+        return 0
 
 if __name__ == "__main__":
     ss = SupervisedSolver("../Data/training.csv")
