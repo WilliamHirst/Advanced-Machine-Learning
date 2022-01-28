@@ -8,9 +8,9 @@ import pandas as pd
     
  
 class SupervisedSolver:
-    def __init__(self, dataSplit = 0.2):
-        self.featuresTrain = np.load("../Data/featuresTrain.npy")
-        self.targetsTrain = np.load("../Data/targetsTrain.npy")
+    def __init__(self, features, targets):
+        self.featuresTrain = features
+        self.targetsTrain = targets
         self.lengthFrame = len(self.targetsTrain)
         self.get_model()
 
@@ -26,14 +26,14 @@ class SupervisedSolver:
         model = tf.keras.Sequential(
             [
                 tf.keras.layers.Dense(
-                    20, activation="sigmoid", input_shape=(len(self.featuresTrain[0]),)
+                    50, activation="sigmoid", input_shape=(len(self.featuresTrain[0]),)
                 ),
-                tf.keras.layers.Dense(20, activation="sigmoid"),
-                tf.keras.layers.Dense(20, activation="sigmoid"),
+                tf.keras.layers.Dense(50, activation="sigmoid"),
+                tf.keras.layers.Dense(50, activation="sigmoid"),
                 tf.keras.layers.Dense(1),
             ]
         )
-        self.optimizer = optimizers.Adam(learning_rate=1e-3)
+        self.optimizer = optimizers.Adam(learning_rate=1e-4)
         model.compile(loss="categorical_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
         self.model = model
 
@@ -51,6 +51,7 @@ class SupervisedSolver:
     
     def predict(self): 
         return 0
+    
     def accuracy(self):
         predict = self.model(self.featuresTrain).numpy().ravel()
         ac = np.sum(np.around(self.targetsTrain) == np.around(predict))/self.lengthFrame
@@ -71,8 +72,14 @@ class SupervisedSolver:
     
 
 if __name__ == "__main__":
+    
+    # Load data from npy storage. Must have run ReadFile.py first
+    featuresTrain = np.load("../Data/featuresTrain.npy")
+    targetsTrain = np.load("../Data/targetsTrain.npy")
+    
+    
     # Place tensors on the CPU
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-        SS = SupervisedSolver()
-        SS.train(50000,5)
+        SS = SupervisedSolver(featuresTrain, targetsTrain)
+        SS.train(50000,100)
         print(f"{SS.accuracy()*100:.1f}%")
