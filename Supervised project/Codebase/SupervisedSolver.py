@@ -17,6 +17,7 @@ class SupervisedSolver:
     
     def get_model(self,method):
         m = M.Model(method, self.nrFeatures)
+        self.tool = m.tool
         self.model = m()
         
     def setup_model(self):
@@ -26,16 +27,19 @@ class SupervisedSolver:
         self.model.fit(
                     self.featuresTrain,
                     self.targetsTrain,
-                    batch_size=batchSize,
-                    epochs=epochs
-                    )
+                    )#batch_size=batchSize,
+                    #epochs=epochs
+                    #)
         return 0
     
     def predict(self): 
         return 0
     
     def accuracy(self):
-        predict = self.model(self.featuresTrain).numpy().ravel()
+        if self.tool == "tf":
+            predict = self.model(self.featuresTrain).numpy().ravel()
+        else: 
+            predict = self.model.predict(self.featuresTrain).ravel()
         ac = np.sum(np.around(self.targetsTrain) == np.around(predict))/self.lengthFrame
         return ac
 
@@ -59,10 +63,12 @@ if __name__ == "__main__":
     featuresTrain = np.load("../Data/featuresTrain.npy")
     targetsTrain = np.load("../Data/targetsTrain.npy")
     
-    
+    """
+    Model types: neuralNetwork -- decisionTree
+    """
     # Place tensors on the CPU
     with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
         SS = SupervisedSolver(featuresTrain, targetsTrain)
         SS.get_model("neuralNetwork")
-        SS.train(50000,100)
+        SS.train(50000,10)
         print(f"{SS.accuracy()*100:.1f}%")

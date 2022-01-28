@@ -1,13 +1,16 @@
 import tensorflow as tf
 from tensorflow.keras import optimizers
 from SupervisedSolver import SupervisedSolver
+from sklearn.tree import DecisionTreeRegressor
+
 
 
 class Model(SupervisedSolver):
-    def __init__(self, method, nrFeatures):
-        methods = {"neuralNetwork": self.neural_network}
+    def __init__(self, method, nrFeatures, ):
+        methods = { "neuralNetwork": [self.neural_network, "tf"],
+                    "decisionTree": [self.decision_tree, "sklearn"]}
         self.nrFeatures  = nrFeatures
-        self.initMethod = methods[method]
+        self.initMethod, self.tool  = methods[method]
         self.initMethod()
     
     def __call__(self):
@@ -35,4 +38,7 @@ class Model(SupervisedSolver):
         model.compile(loss="categorical_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
         self.model = model
 
+    def decision_tree(self):
+        model = DecisionTreeRegressor()
+        self.model = model
 
