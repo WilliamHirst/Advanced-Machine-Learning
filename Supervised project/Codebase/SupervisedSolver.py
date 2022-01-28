@@ -20,8 +20,6 @@ class SupervisedSolver:
         self.fit = m.fit
         self.model = m()
         
-    def setup_model(self):
-        return 0
     
 
     def train(self):
