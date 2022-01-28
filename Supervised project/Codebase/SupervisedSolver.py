@@ -19,9 +19,8 @@ class SupervisedSolver:
         self.tool = m.tool
         self.fit = m.fit
         self.model = m()
-        
-    
 
+            
     def train(self):
         self.fit(
                     self.featuresTrain,
@@ -29,8 +28,15 @@ class SupervisedSolver:
                 )
         return 0
     
-    def predict(self): 
-        return 0
+    def predict(self, featuresTest): 
+        if self.tool == "tf":
+            predict = np.around(self.model(featuresTest).numpy().ravel())
+        else: 
+            predict = np.around(self.model.predict(featuresTest).ravel())
+        
+        print(predict)
+        
+        print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
     
     def accuracy(self, featuresTest, targetTest):
         if self.tool == "tf":
@@ -59,13 +65,15 @@ if __name__ == "__main__":
     # Load data from npy storage. Must have run ReadFile.py first
     featuresTrain = np.load("../Data/featuresTrain.npy")
     targetsTrain = np.load("../Data/targetsTrain.npy")
+    featuresTest = np.load("../Data/featuresTest.npy")
     
     """
     Model types: neuralNetwork -- decisionTree
     """
     # Place tensors on the CPU
     with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
-        SS = SupervisedSolver(featuresTrain, targetsTrain)
-        SS.get_model("decisionTree")
+        SS = SupervisedSolver(featuresTrain[:,:-1], targetsTrain)
+        SS.get_model("neuralNetwork", 20, 50000)
         SS.train()
-        print(f"{SS.accuracy(featuresTrain, targetsTrain)*100:.1f}%")
+        #print(f"{SS.accuracy(featuresTrain, targetsTrain)*100:.1f}%")
+        SS.predict(featuresTest)

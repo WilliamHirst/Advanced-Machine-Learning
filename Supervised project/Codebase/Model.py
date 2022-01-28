@@ -33,7 +33,9 @@ class Model(SupervisedSolver):
                 ),
                 tf.keras.layers.Dense(50, activation="sigmoid"),
                 tf.keras.layers.Dense(50, activation="sigmoid"),
-                tf.keras.layers.Dense(1),
+                tf.keras.layers.Dense(50, activation="sigmoid"),
+                tf.keras.layers.Dense(50, activation="sigmoid"),
+                tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
         self.optimizer = optimizers.Adam(learning_rate=1e-4)
