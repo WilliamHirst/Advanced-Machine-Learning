@@ -6,11 +6,13 @@ from sklearn.tree import DecisionTreeRegressor
 
 
 class Model(SupervisedSolver):
-    def __init__(self, method, nrFeatures, ):
+    def __init__(self, method, nrFeatures, epochs, batchSize):
         methods = { "neuralNetwork": [self.neural_network, "tf"],
                     "decisionTree": [self.decision_tree, "sklearn"]}
         self.nrFeatures  = nrFeatures
         self.initMethod, self.tool  = methods[method]
+        self.epochs = epochs
+        self.batchSize = batchSize
         self.initMethod()
     
     def __call__(self):
@@ -36,9 +38,11 @@ class Model(SupervisedSolver):
         )
         self.optimizer = optimizers.Adam(learning_rate=1e-4)
         model.compile(loss="categorical_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
+        self.fit = lambda X, y: self.model.fit(X, y, epochs = self.epochs, batch_size = self.batchSize)
         self.model = model
 
     def decision_tree(self):
         model = DecisionTreeRegressor()
+        self.fit = lambda X, y: self.model.fit(X, y)
         self.model = model
 

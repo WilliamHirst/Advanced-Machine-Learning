@@ -11,36 +11,35 @@ class SupervisedSolver:
     def __init__(self, features, targets):
         self.featuresTrain = features
         self.targetsTrain = targets
-        self.lengthFrame = len(self.targetsTrain)
+        self.nrEvents = len(self.targetsTrain)
         self.nrFeatures = len(features[0])
 
-    
-    def get_model(self,method):
-        m = M.Model(method, self.nrFeatures)
+    def get_model(self, method, epochs = 100, batchSize = 100):
+        m = M.Model(method, self.nrFeatures, epochs, batchSize)
         self.tool = m.tool
+        self.fit = m.fit
         self.model = m()
         
     def setup_model(self):
         return 0
     
-    def train(self, batchSize, epochs):
-        self.model.fit(
+
+    def train(self):
+        self.fit(
                     self.featuresTrain,
                     self.targetsTrain,
-                    )#batch_size=batchSize,
-                    #epochs=epochs
-                    #)
+                )
         return 0
     
     def predict(self): 
         return 0
     
-    def accuracy(self):
+    def accuracy(self, featuresTest, targetTest):
         if self.tool == "tf":
-            predict = self.model(self.featuresTrain).numpy().ravel()
+            predict = self.model(featuresTest).numpy().ravel()
         else: 
-            predict = self.model.predict(self.featuresTrain).ravel()
-        ac = np.sum(np.around(self.targetsTrain) == np.around(predict))/self.lengthFrame
+            predict = self.model.predict(featuresTest).ravel()
+        ac = np.sum(np.around(targetTest) == np.around(predict))/self.nrEvents
         return ac
 
     def save_model(self, name):
@@ -69,6 +68,6 @@ if __name__ == "__main__":
     # Place tensors on the CPU
     with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
         SS = SupervisedSolver(featuresTrain, targetsTrain)
-        SS.get_model("neuralNetwork")
-        SS.train(50000,10)
-        print(f"{SS.accuracy()*100:.1f}%")
+        SS.get_model("decisionTree")
+        SS.train()
+        print(f"{SS.accuracy(featuresTrain, targetsTrain)*100:.1f}%")

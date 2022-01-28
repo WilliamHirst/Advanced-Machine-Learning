@@ -35,4 +35,21 @@ targets = min_max_scale(np.asarray(targets))
 np.save("../Data/featuresTrain.npy", features)
 np.save("../Data/targetsTrain.npy", targets)
 
+file = open("../Data/test.csv")
+csvreader = csv.reader(file)
+features = []
+targets = []
+
+next(csvreader)
+for row in csvreader:
+    event = []
+    for element in row:
+        event.append(float(element))
+        
+    features.append(event)
+
+features = min_max_scale(np.asarray(features))
+
+np.save("../Data/featuresTest.npy", features)
+
 
