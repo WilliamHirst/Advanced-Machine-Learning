@@ -1,4 +1,5 @@
 import numpy as np
+import Model as M 
 #import matplotlib.pyplot as plt #for plotting
 import tensorflow as tf
 from tensorflow.keras import optimizers#, regularizers #If we need regularizers
@@ -11,31 +12,13 @@ class SupervisedSolver:
         self.featuresTrain = features
         self.targetsTrain = targets
         self.lengthFrame = len(self.targetsTrain)
-        self.get_model()
+        self.nrFeatures = len(features[0])
 
     
-    def get_model(self):
-        """
-        Initializes the model, setting up layers and compiles the model,
-        prepping for training.
-
-        Returns:
-            tensorflow_object: compiled model
-        """
-        model = tf.keras.Sequential(
-            [
-                tf.keras.layers.Dense(
-                    50, activation="sigmoid", input_shape=(len(self.featuresTrain[0]),)
-                ),
-                tf.keras.layers.Dense(50, activation="sigmoid"),
-                tf.keras.layers.Dense(50, activation="sigmoid"),
-                tf.keras.layers.Dense(1),
-            ]
-        )
-        self.optimizer = optimizers.Adam(learning_rate=1e-4)
-        model.compile(loss="categorical_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
-        self.model = model
-
+    def get_model(self,method):
+        m = M.Model(method, self.nrFeatures)
+        self.model = m()
+        
     def setup_model(self):
         return 0
     
@@ -80,5 +63,6 @@ if __name__ == "__main__":
     # Place tensors on the CPU
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
         SS = SupervisedSolver(featuresTrain, targetsTrain)
+        SS.get_model("neuralNetwork")
         SS.train(50000,100)
         print(f"{SS.accuracy()*100:.1f}%")
