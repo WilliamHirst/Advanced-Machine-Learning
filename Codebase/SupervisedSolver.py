@@ -1,10 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt #for plotting
 import tensorflow as tf
-from tensorflow.keras import optimizers, regularizers
-from tensorflow.keras.layers import Dense, Input
-from sklearn.model_selection import train_test_split
-import pandas as pd 
+from tensorflow.keras import optimizers#, regularizers #If we need regularizers
+#from sklearn.model_selection import train_test_split
+
     
  
 class SupervisedSolver:
