@@ -1,16 +1,17 @@
 import csv
 import numpy as np
+import pandas as pd
 
-
-def min_max_scale(dataset):
-    min_data = np.min(dataset)
-    max_data = np.max(dataset)
+def standard_scale(dataset):
+    avg_data = np.mean(dataset)
+    std_data = np.std(dataset)
     
-    scaled_dataset = (dataset - min_data)/(max_data-min_data)
+    scaled_dataset = (dataset - avg_data)/(std_data)
     
     return scaled_dataset
 
 file = open("../Data/training.csv")
+
 csvreader = csv.reader(file)
 features = []
 targets = []
@@ -28,8 +29,8 @@ for row in csvreader:
                 targets.append(1)
     features.append(event)
 
-features = min_max_scale(np.asarray(features))
-targets = min_max_scale(np.asarray(targets))
+features = standard_scale(np.asarray(features))
+targets = standard_scale(np.asarray(targets))
 
 
 np.save("../Data/featuresTrain.npy", features)
