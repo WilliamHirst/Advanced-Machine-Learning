@@ -61,7 +61,7 @@ if __name__ == "__main__":
     
     
     # Place tensors on the CPU
-    with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+    with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
         SS = SupervisedSolver(featuresTrain, targetsTrain)
         SS.get_model("neuralNetwork")
         SS.train(50000,100)
