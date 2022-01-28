@@ -29,8 +29,7 @@ class SupervisedSolver:
                 )
         return 0
     
-    def predict(self): 
-        return 0
+    
     
     def accuracy(self, featuresTest, targetTest):
         if self.tool == "tf":
@@ -51,6 +50,27 @@ class SupervisedSolver:
 
     def load_from_checkpoint(self, checkpoint_name):
         self.model.load_weights(f"tf_checkpoints/{checkpoint_name}")
+        
+    def predict(self):
+        """
+        Get number of signals and backgrounds from data given AMS score,
+        AMS score should be guiding the classification somehow
+        """
+        s, b = 0
+        return s, b 
+    
+        
+    def significant_events(self, s, b):
+        s, b = self.predict()
+        mu_b = 0
+        n = s + b 
+        gauss_significant_discovery = (n-mu_b)/np.sqrt(mu_b)
+        return gauss_significant_discovery
+    
+    def AMS(self, s, b):
+        b_reg = 10
+        ams = np.sqrt( 2*((s+b+b_reg)*np.ln(1 + (s)/(b + b_reg))) - s )
+        return ams
         
     
 
