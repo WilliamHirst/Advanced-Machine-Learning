@@ -58,13 +58,7 @@ class SupervisedSolver:
     def load_from_checkpoint(self, checkpoint_name):
         self.model.load_weights(f"tf_checkpoints/{checkpoint_name}")
         
-    def predict(self):
-        """
-        Get number of signals and backgrounds from data given AMS score,
-        AMS score should be guiding the classification somehow
-        """
-        s, b = 0
-        return s, b 
+    
     
         
     def significant_events(self, s, b):
@@ -92,7 +86,7 @@ if __name__ == "__main__":
     Model types: neuralNetwork -- decisionTree
     """
     # Place tensors on the CPU
-    with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
+    with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
         SS = SupervisedSolver(featuresTrain[:,:-1], targetsTrain)
         SS.get_model("neuralNetwork", 20, 50000)
         SS.train()
