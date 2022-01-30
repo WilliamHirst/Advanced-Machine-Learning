@@ -1,9 +1,8 @@
 import numpy as np
 import Model as M 
-#import matplotlib.pyplot as plt #for plotting
+#import matplotlib.pyplt as plt #for plotting
 import tensorflow as tf
 from tensorflow.keras import optimizers#, regularizers #If we need regularizers
-#from sklearn.model_selection import train_test_split
 
     
  
@@ -19,13 +18,9 @@ class SupervisedSolver:
         self.tool = m.tool
         self.fit = m.fit
         self.model = m()
-
             
     def train(self):
-        self.fit(
-                    self.featuresTrain,
-                    self.targetsTrain,
-                )
+        self.fit(self.featuresTrain, self.targetsTrain)
         return 0
     
     def predict(self, featuresTest): 
@@ -33,9 +28,7 @@ class SupervisedSolver:
             predict = np.around(self.model(featuresTest).numpy().ravel())
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
-        
-        print(predict)
-        
+    
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
     
     def accuracy(self, featuresTest, targetTest):
@@ -57,15 +50,6 @@ class SupervisedSolver:
 
     def load_from_checkpoint(self, checkpoint_name):
         self.model.load_weights(f"tf_checkpoints/{checkpoint_name}")
-        
-    def predict(self):
-        """
-        Get number of signals and backgrounds from data given AMS score,
-        AMS score should be guiding the classification somehow
-        """
-        s, b = 0
-        return s, b 
-    
         
     def significant_events(self, s, b):
         s, b = self.predict()
@@ -96,5 +80,4 @@ if __name__ == "__main__":
         SS = SupervisedSolver(featuresTrain[:,:-1], targetsTrain)
         SS.get_model("neuralNetwork", 20, 50000)
         SS.train()
-        #print(f"{SS.accuracy(featuresTrain, targetsTrain)*100:.1f}%")
         SS.predict(featuresTest)

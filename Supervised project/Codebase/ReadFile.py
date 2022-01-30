@@ -32,16 +32,16 @@ for row in csvreader:
 features = standard_scale(np.asarray(features))
 targets = standard_scale(np.asarray(targets))
 
-
 np.save("../Data/featuresTrain.npy", features)
 np.save("../Data/targetsTrain.npy", targets)
+
 
 file = open("../Data/test.csv")
 csvreader = csv.reader(file)
 features = []
 targets = []
-
 next(csvreader)
+
 for row in csvreader:
     event = []
     for element in row:
