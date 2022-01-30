@@ -1,6 +1,5 @@
 import csv
 import numpy as np
-import pandas as pd
 
 def standard_scale(dataset):
     avg_data = np.mean(dataset)
@@ -11,6 +10,8 @@ def standard_scale(dataset):
     return scaled_dataset
 
 file = open("../Data/training.csv")
+
+
 
 csvreader = csv.reader(file)
 features = []
@@ -49,7 +50,7 @@ for row in csvreader:
         
     features.append(event)
 
-features = min_max_scale(np.asarray(features))
+features = standard_scale(np.asarray(features))
 
 np.save("../Data/featuresTest.npy", features)
 
