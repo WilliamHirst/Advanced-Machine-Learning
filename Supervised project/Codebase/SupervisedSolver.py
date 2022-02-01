@@ -1,6 +1,5 @@
 import numpy as np
 import Model as M 
-#import matplotlib.pyplt as plt #for plotting
 import tensorflow as tf
 from tensorflow.keras import optimizers#, regularizers #If we need regularizers
 
@@ -77,7 +76,7 @@ if __name__ == "__main__":
     """
     # Place tensors on the CPU
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-        SS = SupervisedSolver(featuresTrain[:,:-1], targetsTrain)
-        SS.get_model("neuralNetwork", 20, 50000)
+        SS = SupervisedSolver(featuresTrain[:,1:-1], targetsTrain)
+        SS.get_model("decisionTree")
         SS.train()
-        SS.predict(featuresTest)
+        SS.predict(featuresTest[:,1:])
