@@ -31,7 +31,7 @@ class SupervisedSolver:
             predict = np.around(self.model.predict(featuresTest).ravel())
         
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
-        print(f"Accuracy: {np.sum(predict==targetTest)/len(predict)*100}%")
+        print(f"Accuracy: {np.sum(predict==targetTest)/len(predict)*100:.1f}%")
     
     def accuracy(self, featuresTest, targetTest):
         if self.tool == "tf":
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     Model types: neuralNetwork -- decisionTree -- xGBoost
     """
     # Place tensors on the CPU
-    with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-        SS = SupervisedSolver(X_train, y_train)
-        SS.get_model("xGBoost")
-        SS.train()
-        SS.predict(X_test,y_test)
+    #with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+    SS = SupervisedSolver(X_train, y_train)
+    SS.get_model("xGBoost")
+    SS.train()
+    SS.predict(X_test,y_test)

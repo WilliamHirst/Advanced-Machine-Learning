@@ -53,5 +53,5 @@ class Model(SupervisedSolver):
         self.model = model
     def xGBoost(self):
         self.fit = lambda X, y: self.model.fit(X, y)
-        self.model = xgb.XGBClassifier()
+        self.model = xgb.XGBClassifier(use_label_encoder=False)
 
