@@ -2,13 +2,17 @@ import tensorflow as tf
 from tensorflow.keras import optimizers
 from SupervisedSolver import SupervisedSolver
 from sklearn.tree import DecisionTreeRegressor
+import xgboost as xgb
+
+
 
 
 
 class Model(SupervisedSolver):
     def __init__(self, method, nrFeatures, epochs, batchSize):
         methods = { "neuralNetwork": [self.neural_network, "tf"],
-                    "decisionTree": [self.decision_tree, "sklearn"]}
+                    "decisionTree": [self.decision_tree, "sklearn"],
+                    "xGBoost": [self.xGBoost, "sklearn"]}
         self.nrFeatures  = nrFeatures
         self.initMethod, self.tool  = methods[method]
         self.epochs = epochs
@@ -47,4 +51,7 @@ class Model(SupervisedSolver):
         model = DecisionTreeRegressor()
         self.fit = lambda X, y: self.model.fit(X, y)
         self.model = model
+    def xGBoost(self):
+        self.fit = lambda X, y: self.model.fit(X, y)
+        self.model = xgb.XGBClassifier()
 

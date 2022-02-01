@@ -1,7 +1,9 @@
 import numpy as np
 import Model as M 
 import tensorflow as tf
-from tensorflow.keras import optimizers#, regularizers #If we need regularizers
+from tensorflow.keras import optimizers #If we need regularizers
+from sklearn.model_selection import train_test_split 
+
 
     
  
@@ -22,13 +24,14 @@ class SupervisedSolver:
         self.fit(self.featuresTrain, self.targetsTrain)
         return 0
     
-    def predict(self, featuresTest): 
+    def predict(self, featuresTest,targetTest): 
         if self.tool == "tf":
             predict = np.around(self.model(featuresTest).numpy().ravel())
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
-    
+        
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
+        print(f"Accuracy: {np.sum(predict==targetTest)/len(predict)*100}%")
     
     def accuracy(self, featuresTest, targetTest):
         if self.tool == "tf":
@@ -69,14 +72,15 @@ if __name__ == "__main__":
     # Load data from npy storage. Must have run ReadFile.py first
     featuresTrain = np.load("../Data/featuresTrain.npy")
     targetsTrain = np.load("../Data/targetsTrain.npy")
-    featuresTest = np.load("../Data/featuresTest.npy")
-    
+    #featuresTest = np.load("../Data/featuresTest.npy")
+    X_train, X_test, y_train, y_test = train_test_split(featuresTrain[:,1:-1], targetsTrain, test_size = 0.2, random_state = 0)
+
     """
-    Model types: neuralNetwork -- decisionTree
+    Model types: neuralNetwork -- decisionTree -- xGBoost
     """
     # Place tensors on the CPU
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-        SS = SupervisedSolver(featuresTrain[:,1:-1], targetsTrain)
-        SS.get_model("decisionTree")
+        SS = SupervisedSolver(X_train, y_train)
+        SS.get_model("xGBoost")
         SS.train()
-        SS.predict(featuresTest[:,1:])
+        SS.predict(X_test,y_test)

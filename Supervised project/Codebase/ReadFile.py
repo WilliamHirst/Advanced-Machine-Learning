@@ -2,12 +2,12 @@ import csv
 import numpy as np
 
 def standard_scale(dataset):
-    avg_data = np.mean(dataset)
-    std_data = np.std(dataset)
-    
-    scaled_dataset = (dataset - avg_data)/(std_data)
-    
-    return scaled_dataset
+
+    avg_data = np.nanmean(dataset, axis = 1)
+    std_data = np.nanstd(dataset, axis = 1)
+    for i in range(len(dataset[0])):
+        dataset[:,i] = (dataset[:,i] - avg_data[i])/(std_data)    
+    return dataset
 
 file = open("../Data/training.csv")
 
@@ -30,8 +30,13 @@ for row in csvreader:
                 targets.append(1)
     features.append(event)
 
-features = standard_scale(np.asarray(features))
-targets = standard_scale(np.asarray(targets))
+
+features = np.asarray(features)
+features = np.where(features == -999.0, np.NaN, features)
+features = standard_scale(features)
+targets = np.asarray(targets)
+
+
 
 np.save("../Data/featuresTrain.npy", features)
 np.save("../Data/targetsTrain.npy", targets)
@@ -50,7 +55,9 @@ for row in csvreader:
         
     features.append(event)
 
-features = standard_scale(np.asarray(features))
+features = np.asarray(features)
+features = np.where(features == -999.0, np.NaN, features)
+features = standard_scale(features)
 
 np.save("../Data/featuresTest.npy", features)
 
