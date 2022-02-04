@@ -9,7 +9,7 @@ import xgboost as xgb
 
 
 class Model(SupervisedSolver):
-    def __init__(self, method, nrFeatures, epochs, batchSize):
+    def __init__(self, method, nrFeatures, epochs, batchSize, depth):
         methods = { "neuralNetwork": [self.neural_network, "tf"],
                     "decisionTree": [self.decision_tree, "sklearn"],
                     "xGBoost": [self.xGBoost, "sklearn"]}
@@ -17,6 +17,7 @@ class Model(SupervisedSolver):
         self.initMethod, self.tool  = methods[method]
         self.epochs = epochs
         self.batchSize = batchSize
+        self.depth = depth
         self.initMethod()
     
     def __call__(self):
@@ -54,8 +55,9 @@ class Model(SupervisedSolver):
     def xGBoost(self):
         self.fit = lambda X, y: self.model.fit(X, y)
         
-        self.model = xgb.XGBClassifier(max_depth=20,
-                                       eta=1,
-                                       use_label_encoder=False)
+        self.model = xgb.XGBClassifier(max_depth=self.depth,
+                                       use_label_encoder=False,
+                                       objective = "binary:logistic",
+                                       eval_metric = "logloss")
         
 

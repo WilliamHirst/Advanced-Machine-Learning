@@ -15,8 +15,8 @@ class SupervisedSolver:
         self.nrEvents = len(self.targetsTrain)
         self.nrFeatures = len(features[0])
 
-    def get_model(self, method, epochs = 100, batchSize = 100):
-        m = M.Model(method, self.nrFeatures, epochs, batchSize)
+    def get_model(self, method, epochs = 100, batchSize = 100, depth = 10):
+        m = M.Model(method, self.nrFeatures, epochs, batchSize, depth)
         self.tool = m.tool
         self.fit = m.fit
         self.model = m()
@@ -42,6 +42,9 @@ class SupervisedSolver:
         ac = np.sum(np.around(targetTest) == np.around(predict))/self.nrEvents
         return ac
 
+
+
+
     def save_model(self, name):
         self.model.save(f"tf_models/model_{name}.h5")
 
@@ -65,6 +68,11 @@ class SupervisedSolver:
         b_reg = 10
         ams = np.sqrt( 2*((s+b+b_reg)*np.ln(1 + (s)/(b + b_reg))) - s )
         return ams
+    
+    def plotModel(self):
+        #xgb.plot_tree(SS.model, num_trees=1)
+        xgb.plot_importance(self.model)
+        plt.show()
         
     
 
@@ -86,14 +94,13 @@ if __name__ == "__main__":
     t0 = time.time()
 
     SS = SupervisedSolver(X_train, y_train)
-    SS.get_model("xGBoost")
+    SS.get_model("xGBoost", depth = 10)
     SS.train()
     SS.predict(X_test,y_test)
+    
     
     t1 = time.time()
     total_n = t1-t0
     print("{:.2f}s".format(total_n))
+    SS.plotModel()
     
-    xgb.plot_tree(SS.model, num_trees=1)
-    
-    plt.show()
