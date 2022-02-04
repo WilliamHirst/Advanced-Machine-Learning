@@ -3,6 +3,7 @@ import Model as M
 import tensorflow as tf
 from tensorflow.keras import optimizers #If we need regularizers
 from sklearn.model_selection import train_test_split 
+import matplotlib.pyplot as plt 
 
 
     
@@ -68,7 +69,9 @@ class SupervisedSolver:
     
 
 if __name__ == "__main__":
-    
+    import time
+    import xgboost as xgb
+
     # Load data from npy storage. Must have run ReadFile.py first
     featuresTrain = np.load("../Data/featuresTrain.npy")
     targetsTrain = np.load("../Data/targetsTrain.npy")
@@ -80,7 +83,17 @@ if __name__ == "__main__":
     """
     # Place tensors on the CPU
     #with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+    t0 = time.time()
+
     SS = SupervisedSolver(X_train, y_train)
     SS.get_model("xGBoost")
     SS.train()
     SS.predict(X_test,y_test)
+    
+    t1 = time.time()
+    total_n = t1-t0
+    print("{:.2f}s".format(total_n))
+    
+    xgb.plot_tree(SS.model, num_trees=1)
+    
+    plt.show()
