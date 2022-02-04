@@ -9,11 +9,13 @@ import matplotlib.pyplot as plt
     
  
 class SupervisedSolver:
-    def __init__(self, features, targets):
+    def __init__(self, features, targets, nanToMean = False):
         self.featuresTrain = features
         self.targetsTrain = targets
         self.nrEvents = len(self.targetsTrain)
         self.nrFeatures = len(features[0])
+
+        if nanToMean: self.setNanToMean()
 
     def get_model(self, method, epochs = 100, batchSize = 100, depth = 10):
         m = M.Model(method, self.nrFeatures, epochs, batchSize, depth)
@@ -43,7 +45,9 @@ class SupervisedSolver:
         return ac
 
 
-
+    """
+    TF-MODEL
+    """
 
     def save_model(self, name):
         self.model.save(f"tf_models/model_{name}.h5")
@@ -56,7 +60,18 @@ class SupervisedSolver:
 
     def load_from_checkpoint(self, checkpoint_name):
         self.model.load_weights(f"tf_checkpoints/{checkpoint_name}")
-        
+    
+    """
+    FUNCTIONS
+    """
+    
+    def setNanToMean(self):
+        features = self.featuresTrain
+        for i in range(self.nrFeatures):
+                self.featuresTrain[:,i] = np.where(np.isnan(features[:,i]), 
+                                                   np.nanmean(features[:,i]),  
+                                                   features[:,i] )
+
     def significant_events(self, s, b):
         s, b = self.predict()
         mu_b = 0
@@ -72,6 +87,7 @@ class SupervisedSolver:
     def plotModel(self):
         #xgb.plot_tree(SS.model, num_trees=1)
         xgb.plot_importance(self.model)
+        #model.get_booster().feature_names = ["DER mass MMC", "DER mass transverse met lep", "DER mass vis", "list"]
         plt.show()
         
     
@@ -93,12 +109,12 @@ if __name__ == "__main__":
     #with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
 
-    SS = SupervisedSolver(X_train, y_train)
-    SS.get_model("xGBoost", depth = 10)
+    SS = SupervisedSolver(X_train, y_train, nanToMean=True)
+    SS.get_model("xGBoost", depth = 5)
     SS.train()
     SS.predict(X_test,y_test)
     
-    
+
     t1 = time.time()
     total_n = t1-t0
     print("{:.2f}s".format(total_n))
