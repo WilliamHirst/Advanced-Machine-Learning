@@ -162,9 +162,9 @@ if __name__ == "__main__":
         SS = SupervisedSolver(X_train, y_train)
         SS.removeBadFeatures(30)
         SS.setNanToMean()
-        SS.get_model("xGBoost",epochs = 10, batchSize= 4000, depth = 10)
+        SS.get_model("neuralNetwork", epochs = 50, batchSize= 4000, depth = 10)
         SS.train()
-        #SS.plotAccuracy()
+        SS.plotAccuracy()
 
         
         #X_test, y_test = SS.reshapeDataset(X_test, y_test)
