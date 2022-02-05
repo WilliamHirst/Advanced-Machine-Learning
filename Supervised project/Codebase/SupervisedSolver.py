@@ -28,14 +28,12 @@ class SupervisedSolver:
             featuresTest = np.delete(featuresTest,self.badFeatures,1)
 
         if self.tool == "tf":
-            rough_predict = np.around(self.model(featuresTest).numpy().ravel())
-            predict = np.around(rough_predict)
-
+            predict = np.around(self.model(featuresTest).numpy().ravel())
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
 
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
-        print(f"Accuracy: {np.sum(predict==targetTest)/len(predict)*100:.1f}%")
+        #print(f"Accuracy: {np.sum(np.equal(predict,targetTest.ravel()))/len(predict)*100:.1f}%")
     
     def accuracy(self, featuresTest, targetTest):
         if self.tool == "tf":
@@ -165,14 +163,14 @@ if __name__ == "__main__":
         SS.removeBadFeatures(30)
         SS.setNanToMean(SS.featuresTrain)
 
-        SS.get_model("convNeuralNetwork",epochs = 2, batchSize= 4000, depth = 10)
+        SS.get_model("neuralNetwork",epochs = 50, batchSize= 4000, depth = 10)
         SS.standard_scale(SS.featuresTrain)
 
         SS.train()
         SS.plotAccuracy()
 
         
-        X_test, y_test = SS.reshapeDataset(X_test, y_test)
+        #X_test, y_test = SS.reshapeDataset(X_test, y_test)
 
         SS.setNanToMean(X_test)
         SS.standard_scale(X_test)
