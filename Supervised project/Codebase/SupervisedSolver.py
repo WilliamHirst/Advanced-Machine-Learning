@@ -27,10 +27,14 @@ class SupervisedSolver:
     def predict(self, featuresTest,targetTest): 
         if featuresTest.shape[1] != self.featuresTrain.shape[1]:
             featuresTest = np.delete(featuresTest,self.badFeatures,1)
-        featureTest = self.standard_scale(featuresTest)
+        featuresTest = self.standard_scale(featuresTest)
         if self.tool == "tf":
             rough_predict = self.model(featuresTest).numpy().ravel()
             predict = np.around(rough_predict)
+            print(predict)
+            is_nans = np.isnan(predict)
+            print(len(np.where(is_nans == True)[0]))
+            
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
 
@@ -162,12 +166,12 @@ if __name__ == "__main__":
         SS = SupervisedSolver(X_train, y_train)
         SS.removeBadFeatures(30)
         SS.setNanToMean()
-        SS.get_model("xGBoost",epochs = 10, batchSize= 4000, depth = 10)
+        SS.get_model("convNeuralNetwork",epochs = 10, batchSize= 4000, depth = 10)
         SS.train()
-        #SS.plotAccuracy()
+        SS.plotAccuracy()
 
         
-        #X_test, y_test = SS.reshapeDataset(X_test, y_test)
+        X_test, y_test = SS.reshapeDataset(X_test, y_test)
         
         SS.predict(X_test, y_test)
 
