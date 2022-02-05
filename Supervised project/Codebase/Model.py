@@ -37,7 +37,9 @@ class Model(SupervisedSolver):
                 tf.keras.layers.Dense(
                     100, activation="relu", input_shape=(self.nrFeatures,)
                 ),
-                tf.keras.layers.Dense(60, activation="relu"),
+                tf.keras.layers.Dense(100, activation="relu"),
+                tf.keras.layers.Dense(50, activation="relu"),
+                tf.keras.layers.Dense(20, activation="relu"),
                 tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
@@ -45,6 +47,7 @@ class Model(SupervisedSolver):
         model.compile(loss="binary_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
         self.fit = lambda X, y: self.model.fit(X, y, epochs = self.epochs, batch_size = self.batchSize)
         self.model = model
+
     def convolutional_neural_network(self):
         """
         Initializes the model, setting up layers and compiles the model,

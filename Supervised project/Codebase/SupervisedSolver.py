@@ -163,7 +163,7 @@ if __name__ == "__main__":
         SS.removeBadFeatures(30)
         SS.setNanToMean(SS.featuresTrain)
 
-        SS.get_model("neuralNetwork",epochs = 50, batchSize= 4000, depth = 10)
+        SS.get_model("neuralNetwork",epochs = 500, batchSize= 4000, depth = 10)
         SS.standard_scale(SS.featuresTrain)
 
         SS.train()
