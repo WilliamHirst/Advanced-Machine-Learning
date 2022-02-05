@@ -9,13 +9,11 @@ import matplotlib.pyplot as plt
     
  
 class SupervisedSolver:
-    def __init__(self, features, targets, nanToMean = False):
+    def __init__(self, features, targets):
         self.featuresTrain = features
         self.targetsTrain = targets
         self.nrEvents = len(self.targetsTrain)
         self.nrFeatures = len(features[0])
-
-        if nanToMean: self.setNanToMean()
 
     def get_model(self, method, epochs = 100, batchSize = 100, depth = 10):
         m = M.Model(method, self.nrFeatures, epochs, batchSize, depth)
@@ -71,6 +69,15 @@ class SupervisedSolver:
                 self.featuresTrain[:,i] = np.where(np.isnan(features[:,i]), 
                                                    np.nanmean(features[:,i]),  
                                                    features[:,i] )
+    def removeBadFeatures(self, procentage):
+        for i in range(self.nrFeatures):
+            nrOfNan = np.sum(np.where(np.isnan(self.featuresTrain), 1, 0))
+            featuresProcentage = nrOfNan/self.nrEvents * 100
+            if featuresProcentage >= procentage:    
+                newFeatures = np.delete(self.featuresTrain, i, 1) 
+        self.featuresTrain = newFeatures
+        self.nrFeatures = len(self.featuresTrain[0])
+
 
     def significant_events(self, s, b):
         s, b = self.predict()
@@ -103,20 +110,22 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(featuresTrain[:,1:-1], targetsTrain, test_size = 0.2, random_state = 0)
 
     """
-    Model types: neuralNetwork -- decisionTree -- xGBoost
+    Model types: neuralNetwork -- decisionTree -- xGBoost -- convNeuralNetwork
     """
     # Place tensors on the CPU
     #with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
 
-    SS = SupervisedSolver(X_train, y_train, nanToMean=True)
-    SS.get_model("xGBoost", depth = 5)
+    SS = SupervisedSolver(X_train, y_train)
+    SS.removeBadFeatures(30)
+    SS.setNanToMean()
+    SS.get_model("convNeuralNetwork",epochs = 30, batchSize= 4000, depth = 5)
     SS.train()
-    SS.predict(X_test,y_test)
+    
     
 
     t1 = time.time()
     total_n = t1-t0
     print("{:.2f}s".format(total_n))
-    SS.plotModel()
+    #SS.plotModel()
     
