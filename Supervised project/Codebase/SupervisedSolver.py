@@ -6,8 +6,6 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt 
 
 
-    
- 
 class SupervisedSolver:
     def __init__(self, features, targets):
         self.featuresTrain = features
@@ -26,11 +24,12 @@ class SupervisedSolver:
         return 0
     
     def predict(self, featuresTest,targetTest): 
+        if featuresTest.shape[1] != self.featuresTrain.shape[1]:
+            featuresTest = np.delete(featuresTest,self.badFeatures,1)
         if self.tool == "tf":
             predict = np.around(self.model(featuresTest).numpy().ravel())
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
-        
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
         print(f"Accuracy: {np.sum(predict==targetTest)/len(predict)*100:.1f}%")
     
@@ -72,17 +71,28 @@ class SupervisedSolver:
                 self.featuresTrain[:,i] = np.where(np.isnan(features[:,i]), 
                                                    np.nanmean(features[:,i]),  
                                                    features[:,i] )
-    def removeBadFeatures(self, procentage):
+
+    def removeBadFeatures(self, procentage = 30):
         """
-        Removes all features above a certain precentage of nan values. 
+        Removes all bad features. 
         """
-        for i in range(self.nrFeatures):
-            nrOfNan = np.sum(np.where(np.isnan(self.featuresTrain), 1, 0))
-            featuresProcentage = nrOfNan/self.nrEvents * 100
-            if featuresProcentage >= procentage:    
-                newFeatures = np.delete(self.featuresTrain, i, 1) 
-        self.featuresTrain = newFeatures
+        self.findBadFeatures(procentage)
+       
+        self.featuresTrain = np.delete(self.featuresTrain, self.badFeatures, 1) 
         self.nrFeatures = len(self.featuresTrain[0])
+
+
+    def findBadFeatures(self,procentage):
+        """
+        Finds all features with a certain precentage of nan values.
+        """
+        badFeatures = []
+        for i in range(self.nrFeatures):
+            nrOfNan = np.sum(np.where(np.isnan(self.featuresTrain[:,i]), 1, 0))
+            featuresProcentage = nrOfNan/self.nrEvents * 100
+            if featuresProcentage >= procentage:   
+                badFeatures.append(i) 
+        self.badFeatures = np.asarray(badFeatures)
 
 
     def significant_events(self, s, b):
@@ -136,9 +146,11 @@ if __name__ == "__main__":
     SS = SupervisedSolver(X_train, y_train)
     SS.removeBadFeatures(30)
     SS.setNanToMean()
-    SS.get_model("convNeuralNetwork",epochs = 30, batchSize= 4000, depth = 5)
+    SS.get_model("convNeuralNetwork",epochs = 30, batchSize= 4000, depth = 2)
     SS.train()
-    SS.plotAccuracy()
+    SS.predict(X_test, y_test)
+
+    #SS.plotAccuracy()
 
     
 

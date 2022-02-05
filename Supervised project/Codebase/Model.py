@@ -42,7 +42,7 @@ class Model(SupervisedSolver):
             ]
         )
         self.optimizer = optimizers.Adam(learning_rate=1e-4)
-        model.compile(loss="categorical_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
+        model.compile(loss="binary_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
         self.fit = lambda X, y: self.model.fit(X, y, epochs = self.epochs, batch_size = self.batchSize)
         self.model = model
     def convolutional_neural_network(self):
