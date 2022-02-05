@@ -1,13 +1,7 @@
 import csv
 import numpy as np
 
-def standard_scale(dataset):
 
-    avg_data = np.nanmean(dataset, axis = 1)
-    std_data = np.nanstd(dataset, axis = 1)
-    for i in range(len(dataset[0])):
-        dataset[:,i] = (dataset[:,i] - avg_data[i])/(std_data)    
-    return dataset
 
 file = open("../Data/training.csv")
 
@@ -33,7 +27,6 @@ for row in csvreader:
 
 features = np.asarray(features)
 features = np.where(features == -999.0, np.NaN, features)
-features = standard_scale(features)
 targets = np.asarray(targets)
 
 
@@ -57,7 +50,6 @@ for row in csvreader:
 
 features = np.asarray(features)
 features = np.where(features == -999.0, np.NaN, features)
-features = standard_scale(features)
 
 np.save("../Data/featuresTest.npy", features)
 

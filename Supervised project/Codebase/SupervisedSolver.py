@@ -20,6 +20,7 @@ class SupervisedSolver:
         self.model = m()
             
     def train(self):
+        self.featuresTrain = self.standard_scale(self.featuresTrain)
         self.trainModel =  self.fit(self.featuresTrain, self.targetsTrain)
         return 0
     
@@ -31,6 +32,7 @@ class SupervisedSolver:
             predict = np.around(rough_predict)
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
+
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
         print(f"Accuracy: {np.sum(predict==targetTest)/len(predict)*100:.1f}%")
     
@@ -129,8 +131,13 @@ class SupervisedSolver:
         y = y.reshape(y.shape[0], 1, 1)
         
         return X, y
+    def standard_scale(self, dataset):
+        avg_data = np.nanmean(dataset, axis = 1)
+        std_data = np.nanstd(dataset, axis = 1)
+        for i in range(len(dataset[0])):
+            dataset[:,i] = (dataset[:,i] - avg_data[i])/(std_data)    
+        return dataset
         
-    
 
 if __name__ == "__main__":
     import time
@@ -140,7 +147,7 @@ if __name__ == "__main__":
     featuresTrain = np.load("../Data/featuresTrain.npy")
     targetsTrain = np.load("../Data/targetsTrain.npy")
     #featuresTest = np.load("../Data/featuresTest.npy")
-    X_train, X_test, y_train, y_test = train_test_split(featuresTrain[:,1:-1], targetsTrain, test_size = 0.2, random_state = 0)
+    X_train, X_test, y_train, y_test = train_test_split(featuresTrain[:,1:-1], targetsTrain, test_size = 0.15)
 
     """
     Model types: neuralNetwork -- decisionTree -- xGBoost -- convNeuralNetwork
@@ -154,7 +161,7 @@ if __name__ == "__main__":
         SS = SupervisedSolver(X_train, y_train)
         SS.removeBadFeatures(30)
         SS.setNanToMean()
-        SS.get_model("convNeuralNetwork",epochs = 2, batchSize= 4000, depth = 5)
+        SS.get_model("convNeuralNetwork",epochs = 10, batchSize= 4000, depth = 5)
         SS.train()
         SS.plotAccuracy()
 
