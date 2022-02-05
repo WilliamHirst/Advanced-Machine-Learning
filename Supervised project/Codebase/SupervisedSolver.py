@@ -27,7 +27,10 @@ class SupervisedSolver:
         if featuresTest.shape[1] != self.featuresTrain.shape[1]:
             featuresTest = np.delete(featuresTest,self.badFeatures,1)
         if self.tool == "tf":
-            predict = np.around(self.model(featuresTest).numpy().ravel())
+            rough_predict = self.model(featuresTest).numpy().ravel()
+            print(rough_predict)
+            exit()
+            predict = np.around(rough_predict)
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
@@ -123,6 +126,12 @@ class SupervisedSolver:
         plt.xlabel('epoch')
         plt.legend(['train', 'test'], loc='upper left')
         plt.show()
+    
+    def reshapeDataset(self, X, y): 
+        X = X.reshape(X_test.shape[0], X_test.shape[1], 1)
+        y = y.reshape(y.shape[0], 1, 1)
+        
+        return X, y
         
     
 
@@ -139,23 +148,26 @@ if __name__ == "__main__":
     """
     Model types: neuralNetwork -- decisionTree -- xGBoost -- convNeuralNetwork
     """
-    # Place tensors on the CPU
-    #with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-    t0 = time.time()
-
-    SS = SupervisedSolver(X_train, y_train)
-    SS.removeBadFeatures(30)
-    SS.setNanToMean()
-    SS.get_model("convNeuralNetwork",epochs = 30, batchSize= 4000, depth = 2)
-    SS.train()
-    SS.predict(X_test, y_test)
-
-    #SS.plotAccuracy()
-
     
+    
+    # Place tensors on the CPU
+    with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+        t0 = time.time()
 
-    t1 = time.time()
-    total_n = t1-t0
-    print("{:.2f}s".format(total_n))
-    #SS.plotModel()
+        SS = SupervisedSolver(X_train, y_train)
+        SS.removeBadFeatures(30)
+        SS.setNanToMean()
+        SS.get_model("convNeuralNetwork",epochs = 2, batchSize= 4000, depth = 5)
+        SS.train()
+        SS.plotAccuracy()
+
+        
+        X_test, y_test = SS.reshapeDataset(X_test, y_test)
+        
+        SS.predict(X_test, y_test)
+
+        t1 = time.time()
+        total_n = t1-t0
+        print("{:.2f}s".format(total_n))
+        #SS.plotModel()
     
