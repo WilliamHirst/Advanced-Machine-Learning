@@ -20,17 +20,17 @@ class SupervisedSolver:
         self.model = m()
             
     def train(self):
-        self.featuresTrain = self.standard_scale(self.featuresTrain)
         self.trainModel =  self.fit(self.featuresTrain, self.targetsTrain)
         return 0
     
     def predict(self, featuresTest,targetTest): 
         if featuresTest.shape[1] != self.featuresTrain.shape[1]:
             featuresTest = np.delete(featuresTest,self.badFeatures,1)
-        featureTest = self.standard_scale(featuresTest)
+
         if self.tool == "tf":
-            rough_predict = self.model(featuresTest).numpy().ravel()
+            rough_predict = np.around(self.model(featuresTest).numpy().ravel())
             predict = np.around(rough_predict)
+
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
 
@@ -66,16 +66,6 @@ class SupervisedSolver:
     FUNCTIONS
     """
     
-    def setNanToMean(self):
-        """
-        Fills all nan values with the avarage value of the certain feature.
-        """
-        features = self.featuresTrain
-        for i in range(self.nrFeatures):
-                self.featuresTrain[:,i] = np.where(np.isnan(features[:,i]), 
-                                                   np.nanmean(features[:,i]),  
-                                                   features[:,i] )
-
     def removeBadFeatures(self, procentage = 30):
         """
         Removes all bad features. 
@@ -132,12 +122,23 @@ class SupervisedSolver:
         y = y.reshape(y.shape[0], 1, 1)
         
         return X, y
-    def standard_scale(self, dataset):
-        avg_data = np.nanmean(dataset, axis = 1)
-        std_data = np.nanstd(dataset, axis = 1)
-        for i in range(len(dataset[0])):
-            dataset[:,i] = (dataset[:,i] - avg_data[i])/(std_data)    
-        return dataset
+    def standard_scale(self, *args):
+        avg_data = np.nanmean(args[0], axis = 1)
+        std_data = np.nanstd(args[0], axis = 1)
+        for i in range(len(args[0][0])):
+            args[0][:,i] = (args[0][:,i] - avg_data[i])/(std_data)    
+        return args[0]
+
+    def setNanToMean(self, *args):
+        """
+        Fills all nan values with the avarage value of the certain feature.
+        """
+        for i in range(self.nrFeatures):
+                args[0][:,i] = np.where(np.isnan(args[0][:,i]), 
+                                                np.nanmean(args[0][:,i]),  
+                                                args[0][:,i] )
+        return args[0]
+
         
 
 if __name__ == "__main__":
@@ -159,16 +160,22 @@ if __name__ == "__main__":
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
         t0 = time.time()
 
-        SS = SupervisedSolver(X_train, y_train)
+        SS = SupervisedSolver(X_train, y_train)   
+
         SS.removeBadFeatures(30)
-        SS.setNanToMean()
-        SS.get_model("neuralNetwork", epochs = 50, batchSize= 4000, depth = 10)
+        SS.setNanToMean(SS.featuresTrain)
+
+        SS.get_model("convNeuralNetwork",epochs = 2, batchSize= 4000, depth = 10)
+        SS.standard_scale(SS.featuresTrain)
+
         SS.train()
         SS.plotAccuracy()
 
         
-        #X_test, y_test = SS.reshapeDataset(X_test, y_test)
-        
+        X_test, y_test = SS.reshapeDataset(X_test, y_test)
+
+        SS.setNanToMean(X_test)
+        SS.standard_scale(X_test)
         SS.predict(X_test, y_test)
 
         t1 = time.time()
