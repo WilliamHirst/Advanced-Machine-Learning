@@ -57,10 +57,10 @@ class Model(SupervisedSolver):
             [
                 tf.keras.layers.Conv1D(64, (3), input_shape=(self.nrFeatures,1), activation='relu'),
                 tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
-                 tf.keras.layers.Dropout(0.5),
+                tf.keras.layers.Dropout(0.5),
                 tf.keras.layers.MaxPooling1D(pool_size=2),
                 tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
-                 tf.keras.layers.Dropout(0.5),
+                tf.keras.layers.Dropout(0.5),
                 tf.keras.layers.MaxPooling1D(pool_size=2),
                 tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
                 tf.keras.layers.Flatten(),

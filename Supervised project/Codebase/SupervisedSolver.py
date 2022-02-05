@@ -22,7 +22,7 @@ class SupervisedSolver:
         self.model = m()
             
     def train(self):
-        self.fit(self.featuresTrain, self.targetsTrain)
+        self.trainModel =  self.fit(self.featuresTrain, self.targetsTrain)
         return 0
     
     def predict(self, featuresTest,targetTest): 
@@ -64,12 +64,18 @@ class SupervisedSolver:
     """
     
     def setNanToMean(self):
+        """
+        Fills all nan values with the avarage value of the certain feature.
+        """
         features = self.featuresTrain
         for i in range(self.nrFeatures):
                 self.featuresTrain[:,i] = np.where(np.isnan(features[:,i]), 
                                                    np.nanmean(features[:,i]),  
                                                    features[:,i] )
     def removeBadFeatures(self, procentage):
+        """
+        Removes all features above a certain precentage of nan values. 
+        """
         for i in range(self.nrFeatures):
             nrOfNan = np.sum(np.where(np.isnan(self.featuresTrain), 1, 0))
             featuresProcentage = nrOfNan/self.nrEvents * 100
@@ -96,6 +102,17 @@ class SupervisedSolver:
         xgb.plot_importance(self.model)
         #model.get_booster().feature_names = ["DER mass MMC", "DER mass transverse met lep", "DER mass vis", "list"]
         plt.show()
+
+    def plotAccuracy(self):
+        """
+        Plots the history of the accuracy of the predictions.
+        """
+        plt.plot(self.trainModel.history['accuracy'])
+        plt.title('Model Accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
         
     
 
@@ -121,7 +138,8 @@ if __name__ == "__main__":
     SS.setNanToMean()
     SS.get_model("convNeuralNetwork",epochs = 30, batchSize= 4000, depth = 5)
     SS.train()
-    
+    SS.plotAccuracy()
+
     
 
     t1 = time.time()
