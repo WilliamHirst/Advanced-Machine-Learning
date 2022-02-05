@@ -28,8 +28,6 @@ class SupervisedSolver:
             featuresTest = np.delete(featuresTest,self.badFeatures,1)
         if self.tool == "tf":
             rough_predict = self.model(featuresTest).numpy().ravel()
-            print(rough_predict)
-            exit()
             predict = np.around(rough_predict)
         else: 
             predict = np.around(self.model.predict(featuresTest).ravel())
@@ -80,7 +78,6 @@ class SupervisedSolver:
         Removes all bad features. 
         """
         self.findBadFeatures(procentage)
-       
         self.featuresTrain = np.delete(self.featuresTrain, self.badFeatures, 1) 
         self.nrFeatures = len(self.featuresTrain[0])
 
