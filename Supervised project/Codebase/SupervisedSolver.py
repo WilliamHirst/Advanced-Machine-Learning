@@ -13,7 +13,7 @@ class SupervisedSolver:
         self.nrEvents = len(self.targetsTrain)
         self.nrFeatures = len(features[0])
 
-    def get_model(self, method, epochs = 100, batchSize = 100, depth = 10):
+    def getModel(self, method, epochs = 100, batchSize = 100, depth = 10):
         m = M.Model(method, self.nrFeatures, epochs, batchSize, depth)
         self.tool = m.tool
         self.fit = m.fit
@@ -42,16 +42,16 @@ class SupervisedSolver:
     TF-MODEL
     """
 
-    def save_model(self, name):
+    def saveModel(self, name):
         self.model.save(f"tf_models/model_{name}.h5")
 
-    def load_model(self, name):
+    def loadModel(self, name):
         self.model = tf.keras.models.load_model(f"tf_models/model_{name}.h5")
 
-    def save_checkpoint(self, checkpoint_name):
+    def saveCheckpoint(self, checkpoint_name):
         self.model.save_weights(f"checkpoints/{checkpoint_name}")
 
-    def load_from_checkpoint(self, checkpoint_name):
+    def loadFromCheckpoint(self, checkpoint_name):
         self.model.load_weights(f"tf_checkpoints/{checkpoint_name}")
     
     """
@@ -80,7 +80,7 @@ class SupervisedSolver:
         self.badFeatures = np.asarray(badFeatures)
 
 
-    def significant_events(self, s, b):
+    def significantEvents(self, s, b):
         s, b = self.predict()
         mu_b = 0
         n = s + b 
@@ -114,7 +114,7 @@ class SupervisedSolver:
         y = y.reshape(y.shape[0], 1, 1)
         
         return X, y
-    def standard_scale(self, *args):
+    def standardScale(self, *args):
         avg_data = np.nanmean(args[0], axis = 1)
         std_data = np.nanstd(args[0], axis = 1)
         for i in range(len(args[0][0])):
@@ -155,11 +155,11 @@ if __name__ == "__main__":
 
     SS.removeBadFeatures(30)
     SS.setNanToMean(SS.featuresTrain)
-    SS.standard_scale(SS.featuresTrain)
+    SS.standardScale(SS.featuresTrain)
 
     SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
 
-    SS.get_model("xGBoost", epochs = 2, batchSize= 4000, depth = 3)
+    SS.getModel("xGBoost", epochs = 2, batchSize= 4000, depth = 3)
 
     SS.train()
     #SS.plotAccuracy()

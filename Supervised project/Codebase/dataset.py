@@ -16,6 +16,12 @@ class Dataset:
     def __call__(self):
         return 0
     
+    def corrolationPlot(self): 
+        """
+        Corrolation plot for all the features in the dataset
+        """
+        pass
+    
     
     
 if __name__ == "__main__":
