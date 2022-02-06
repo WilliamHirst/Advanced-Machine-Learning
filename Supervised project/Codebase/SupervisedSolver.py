@@ -33,7 +33,7 @@ class SupervisedSolver:
             predict = np.around(self.model.predict(featuresTest).ravel())
 
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
-        #print(f"Accuracy: {np.sum(np.equal(predict,targetTest.ravel()))/len(predict)*100:.1f}%")
+        print(f"Accuracy: {np.sum(np.equal(predict,targetTest.ravel()))/len(predict)*100:.1f}%")
     
     def accuracy(self, featuresTest, targetTest):
         if self.tool == "tf":
@@ -147,7 +147,6 @@ if __name__ == "__main__":
     featuresTrain = np.load("../Data/featuresTrain.npy")
     targetsTrain = np.load("../Data/targetsTrain.npy")
     #featuresTest = np.load("../Data/featuresTest.npy")
-    X_train, X_test, y_train, y_test = train_test_split(featuresTrain[:,1:-1], targetsTrain, test_size = 0.15)
 
     """
     Model types: neuralNetwork -- decisionTree -- xGBoost -- convNeuralNetwork
@@ -158,13 +157,15 @@ if __name__ == "__main__":
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
         t0 = time.time()
 
-        SS = SupervisedSolver(X_train, y_train)   
+        SS = SupervisedSolver(featuresTrain[:,1:-1], targetsTrain)   
 
         SS.removeBadFeatures(30)
         SS.setNanToMean(SS.featuresTrain)
-
-        SS.get_model("neuralNetwork",epochs = 500, batchSize= 4000, depth = 10)
         SS.standard_scale(SS.featuresTrain)
+
+        SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
+
+        SS.get_model("neuralNetwork", epochs = 100, batchSize= 4000, depth = 10)
 
         SS.train()
         SS.plotAccuracy()
@@ -172,8 +173,6 @@ if __name__ == "__main__":
         
         #X_test, y_test = SS.reshapeDataset(X_test, y_test)
 
-        SS.setNanToMean(X_test)
-        SS.standard_scale(X_test)
         SS.predict(X_test, y_test)
 
         t1 = time.time()
