@@ -11,8 +11,9 @@ import numpy as np
 
 class Model(SupervisedSolver):
     def __init__(self, method, nrFeatures, epochs, batchSize, depth):
-        methods = { "neuralNetwork": [self.neural_network, "tf"],
-                    "convNeuralNetwork": [self.convolutional_neural_network, "tf"],
+        methods = { "neuralNetwork": [self.NN, "tf"],
+                    "convNeuralNetwork": [self.conv_NN, "tf"],
+                    "GRU_NN": [self.GRU_NN, "tf"],
                     "decisionTree": [self.decision_tree, "sklearn"],
                     "xGBoost": [self.xGBoost, "sklearn"]}
         self.nrFeatures  = nrFeatures
@@ -25,7 +26,7 @@ class Model(SupervisedSolver):
     def __call__(self):
         return self.model
     
-    def neural_network(self):
+    def NN(self):
         """
         Initializes the model, setting up layers and compiles the model,
         prepping for training.
@@ -50,7 +51,7 @@ class Model(SupervisedSolver):
         self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
 
-    def convolutional_neural_network(self):
+    def conv_NN(self):
         """
         Initializes the model, setting up layers and compiles the model,
         prepping for training.
@@ -83,6 +84,25 @@ class Model(SupervisedSolver):
         self.predict = lambda X: np.around(self.model(X).numpy().ravel())
         self.model = model
 
+    def GRU_NN(self):
+        """
+        Initializes the model, setting up layers and compiles the model,
+        prepping for training.
+
+        Returns:
+            tensorflow_object: compiled model
+        """
+        model = tf.keras.Sequential(
+            [   tf.keras.layers.Bidirectional(tf.keras.layers.GRU(64,return_sequences=True), input_shape=(self.nrFeatures,)),
+                tf.keras.layers.Dense(10, activation='relu'),
+                tf.keras.layers.Dense(1, activation='sigmoid')
+            ]
+        )
+        model.compile(loss="binary_crossentropy", metrics=["accuracy"])
+        self.fit = lambda X, y: self.model.fit(X, y, epochs = self.epochs, batch_size = self.batchSize)
+        self.predict = lambda X: np.around(model(X).numpy().ravel())
+        self.model = model
+
 
     def decision_tree(self):
         #Prefers max_depth = 12
@@ -94,7 +114,6 @@ class Model(SupervisedSolver):
     def xGBoost(self):
         #Prefers max_depth = 5
         self.fit = lambda X, y: self.model.fit(X, y)
-        
         self.model = xgb.XGBClassifier(max_depth=self.depth,
                                        use_label_encoder=False,
                                        objective = "binary:logistic",

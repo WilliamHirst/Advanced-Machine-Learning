@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras import optimizers #If we need regularizers
 from sklearn.model_selection import train_test_split 
 import matplotlib.pyplot as plt 
-
+import xgboost as xgb
 
 class SupervisedSolver:
     def __init__(self, features, targets):
@@ -36,7 +36,6 @@ class SupervisedSolver:
         predict = self.model_predict(featuresTest)
         ac = np.sum(np.around(targetTest) == np.around(predict))/self.nrEvents
         return ac
-
 
     """
     TF-MODEL
@@ -112,8 +111,8 @@ class SupervisedSolver:
     def reshapeDataset(self, X, y): 
         X = X.reshape(X_test.shape[0], X_test.shape[1], 1)
         y = y.reshape(y.shape[0], 1, 1)
-        
         return X, y
+
     def standardScale(self, *args):
         avg_data = np.nanmean(args[0], axis = 1)
         std_data = np.nanstd(args[0], axis = 1)
@@ -135,7 +134,6 @@ class SupervisedSolver:
 
 if __name__ == "__main__":
     import time
-    import xgboost as xgb
 
     # Load data from npy storage. Must have run ReadFile.py first
     featuresTrain = np.load("../Data/featuresTrain.npy")
@@ -145,7 +143,6 @@ if __name__ == "__main__":
     """
     Model types: neuralNetwork -- decisionTree -- xGBoost -- convNeuralNetwork
     """
-    
     
     # Place tensors on the CPU
     #with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
@@ -159,12 +156,11 @@ if __name__ == "__main__":
 
     SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
 
-    SS.getModel("xGBoost", epochs = 2, batchSize= 4000, depth = 3)
+    SS.getModel("neuralNetwork", epochs = 100, batchSize= 4000, depth = 3)
 
     SS.train()
-    #SS.plotAccuracy()
+    SS.plotAccuracy()
 
-    
     #X_test, y_test = SS.reshapeDataset(X_test, y_test)
 
     SS.predict(X_test, y_test)
