@@ -3,6 +3,7 @@ from tensorflow.keras import optimizers
 from SupervisedSolver import SupervisedSolver
 from sklearn.tree import DecisionTreeRegressor
 import xgboost as xgb
+import numpy as np
 
 
 
@@ -46,6 +47,7 @@ class Model(SupervisedSolver):
         self.optimizer = optimizers.Adam(learning_rate=1e-4)
         model.compile(loss="binary_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
         self.fit = lambda X, y: self.model.fit(X, y, epochs = self.epochs, batch_size = self.batchSize)
+        self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
 
     def convolutional_neural_network(self):
@@ -78,19 +80,28 @@ class Model(SupervisedSolver):
                                                y.reshape(y.shape[0], 1, 1), 
                                                epochs = self.epochs, 
                                                batch_size = self.batchSize)
+        self.predict = lambda X: np.around(self.model(X).numpy().ravel())
         self.model = model
 
 
     def decision_tree(self):
-        model = DecisionTreeRegressor()
+        #Prefers max_depth = 12
+        model = DecisionTreeRegressor(max_depth = self.depth)
         self.fit = lambda X, y: self.model.fit(X, y)
+        self.predict = lambda X: np.around(self.model.predict(X).ravel())
         self.model = model
+
     def xGBoost(self):
+        #Prefers max_depth = 5
         self.fit = lambda X, y: self.model.fit(X, y)
         
         self.model = xgb.XGBClassifier(max_depth=self.depth,
                                        use_label_encoder=False,
                                        objective = "binary:logistic",
-                                       eval_metric = "logloss")
+                                       eval_metric = "logloss",
+                                       tree_method = "hist",
+                                       eta = 0.1
+                                       )
+        self.predict = lambda X: np.around(self.model.predict(X).ravel())
         
 

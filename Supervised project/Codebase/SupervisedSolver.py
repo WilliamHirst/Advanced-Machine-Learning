@@ -17,6 +17,7 @@ class SupervisedSolver:
         m = M.Model(method, self.nrFeatures, epochs, batchSize, depth)
         self.tool = m.tool
         self.fit = m.fit
+        self.model_predict = m.predict
         self.model = m()
             
     def train(self):
@@ -24,22 +25,15 @@ class SupervisedSolver:
         return 0
     
     def predict(self, featuresTest,targetTest): 
-        if featuresTest.shape[1] != self.featuresTrain.shape[1]:
-            featuresTest = np.delete(featuresTest,self.badFeatures,1)
 
-        if self.tool == "tf":
-            predict = np.around(self.model(featuresTest).numpy().ravel())
-        else: 
-            predict = np.around(self.model.predict(featuresTest).ravel())
+        predict = self.model_predict(featuresTest)
 
         print(f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}" )
         print(f"Accuracy: {np.sum(np.equal(predict,targetTest.ravel()))/len(predict)*100:.1f}%")
     
     def accuracy(self, featuresTest, targetTest):
-        if self.tool == "tf":
-            predict = self.model(featuresTest).numpy().ravel()
-        else: 
-            predict = self.model.predict(featuresTest).ravel()
+
+        predict = self.model_predict(featuresTest)
         ac = np.sum(np.around(targetTest) == np.around(predict))/self.nrEvents
         return ac
 
@@ -154,29 +148,29 @@ if __name__ == "__main__":
     
     
     # Place tensors on the CPU
-    with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-        t0 = time.time()
+    #with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+    t0 = time.time()
 
-        SS = SupervisedSolver(featuresTrain[:,1:-1], targetsTrain)   
+    SS = SupervisedSolver(featuresTrain[:,1:-1], targetsTrain)   
 
-        SS.removeBadFeatures(30)
-        SS.setNanToMean(SS.featuresTrain)
-        SS.standard_scale(SS.featuresTrain)
+    SS.removeBadFeatures(30)
+    SS.setNanToMean(SS.featuresTrain)
+    SS.standard_scale(SS.featuresTrain)
 
-        SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
+    SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
 
-        SS.get_model("neuralNetwork", epochs = 100, batchSize= 4000, depth = 10)
+    SS.get_model("xGBoost", epochs = 2, batchSize= 4000, depth = 3)
 
-        SS.train()
-        SS.plotAccuracy()
+    SS.train()
+    #SS.plotAccuracy()
 
-        
-        #X_test, y_test = SS.reshapeDataset(X_test, y_test)
+    
+    #X_test, y_test = SS.reshapeDataset(X_test, y_test)
 
-        SS.predict(X_test, y_test)
+    SS.predict(X_test, y_test)
 
-        t1 = time.time()
-        total_n = t1-t0
-        print("{:.2f}s".format(total_n))
-        #SS.plotModel()
+    t1 = time.time()
+    total_n = t1-t0
+    print("{:.2f}s".format(total_n))
+    #SS.plotModel()
     
