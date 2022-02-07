@@ -10,7 +10,7 @@ import numpy as np
 
 
 class Model(SupervisedSolver):
-    def __init__(self, method, nrFeatures, epochs, batchSize, depth):
+    def __init__(self, method, nrFeatures, epochs = None, batchSize = None, depth = None):
         methods = { "neuralNetwork": [self.NN, "tf"],
                     "convNeuralNetwork": [self.conv_NN, "tf"],
                     "GRU_NN": [self.GRU_NN, "tf"],
@@ -75,13 +75,14 @@ class Model(SupervisedSolver):
                 tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
-        self.optimizer = optimizers.Adam()
-        model.compile(loss= "binary_crossentropy", optimizer=self.optimizer, metrics=["accuracy"])
+
+        model.compile(loss= "binary_crossentropy", optimizer= optimizers.Adam(), metrics=["accuracy"])
+
         self.fit = lambda X, y: self.model.fit(X.reshape(X.shape[0], X.shape[1], 1),
                                                y.reshape(y.shape[0], 1, 1), 
                                                epochs = self.epochs, 
                                                batch_size = self.batchSize)
-        self.predict = lambda X: np.around(self.model(X).numpy().ravel())
+        self.predict = lambda X: np.around(self.model(X.reshape(X.shape[0], X.shape[1], 1)).numpy().ravel())
         self.model = model
 
     def GRU_NN(self):
@@ -101,10 +102,14 @@ class Model(SupervisedSolver):
                 tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
-        model.compile(loss="binary_crossentropy", metrics=["accuracy"])
+        optimizer = optimizers.Adam()
+        model.compile(loss="binary_crossentropy", metrics=["accuracy"],  optimizer = optimizers.Adam())
+
         self.fit = lambda X, y: self.model.fit(X.reshape(X.shape[0], X.shape[1], 1),
-                                               y.reshape(y.shape[0], 1, 1),  epochs = self.epochs, batch_size = self.batchSize)
-        self.predict = lambda X: np.around(model(X).numpy().ravel())
+                                               y.reshape(y.shape[0], 1, 1),  
+                                               epochs = self.epochs, 
+                                               batch_size = self.batchSize)
+        self.predict = lambda X: np.around(model(X.reshape(X.shape[0], X.shape[1], 1)).numpy().ravel())
         self.model = model
 
 

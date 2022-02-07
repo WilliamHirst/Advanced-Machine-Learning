@@ -108,10 +108,6 @@ class SupervisedSolver:
         plt.legend(['train', 'test'], loc='upper left')
         plt.show()
     
-    def reshapeDataset(self, X, y): 
-        X = X.reshape(X_test.shape[0], X_test.shape[1], 1)
-        y = y.reshape(y.shape[0], 1, 1)
-        return X, y
 
     def standardScale(self, *args):
         avg_data = np.nanmean(args[0], axis = 1)
@@ -141,7 +137,7 @@ if __name__ == "__main__":
     #featuresTest = np.load("../Data/featuresTest.npy")
 
     """
-    Model types: neuralNetwork -- decisionTree -- xGBoost -- convNeuralNetwork
+    Model types: neuralNetwork -- convNeuralNetwork -- GRU_NN -- decisionTree -- xGBoost 
     """
     
     # Place tensors on the CPU
@@ -161,7 +157,6 @@ if __name__ == "__main__":
     SS.train()
     SS.plotAccuracy()
 
-    #X_test, y_test = SS.reshapeDataset(X_test, y_test)
 
     SS.predict(X_test, y_test)
 
