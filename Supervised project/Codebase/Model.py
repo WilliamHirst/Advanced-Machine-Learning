@@ -95,8 +95,10 @@ class Model(SupervisedSolver):
         model = tf.keras.Sequential(
             [   tf.keras.layers.Bidirectional(tf.keras.layers.GRU(64,return_sequences=True), input_shape=(self.nrFeatures,1)),
                 tf.keras.layers.Flatten(),
-                tf.keras.layers.Dense(10, activation='relu'),
-                tf.keras.layers.Dense(1, activation='sigmoid')
+                 tf.keras.layers.Dense(100, activation="relu"),
+                tf.keras.layers.Dense(50, activation="relu"),
+                tf.keras.layers.Dense(20, activation="relu"),
+                tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
         model.compile(loss="binary_crossentropy", metrics=["accuracy"])
