@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
     SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
 
-    SS.getModel("neuralNetwork", epochs = 100, batchSize= 4000, depth = 3)
+    SS.getModel("GRU_NN", epochs = 100, batchSize= 4000, depth = 3)
 
     SS.train()
     SS.plotAccuracy()

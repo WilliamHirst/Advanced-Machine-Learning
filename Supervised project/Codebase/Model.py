@@ -93,13 +93,15 @@ class Model(SupervisedSolver):
             tensorflow_object: compiled model
         """
         model = tf.keras.Sequential(
-            [   tf.keras.layers.Bidirectional(tf.keras.layers.GRU(64,return_sequences=True), input_shape=(self.nrFeatures,)),
+            [   tf.keras.layers.Bidirectional(tf.keras.layers.GRU(64,return_sequences=True), input_shape=(self.nrFeatures,1)),
+                tf.keras.layers.Flatten(),
                 tf.keras.layers.Dense(10, activation='relu'),
                 tf.keras.layers.Dense(1, activation='sigmoid')
             ]
         )
         model.compile(loss="binary_crossentropy", metrics=["accuracy"])
-        self.fit = lambda X, y: self.model.fit(X, y, epochs = self.epochs, batch_size = self.batchSize)
+        self.fit = lambda X, y: self.model.fit(X.reshape(X.shape[0], X.shape[1], 1),
+                                               y.reshape(y.shape[0], 1, 1),  epochs = self.epochs, batch_size = self.batchSize)
         self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
 
