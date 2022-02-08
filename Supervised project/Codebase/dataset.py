@@ -12,6 +12,10 @@ class Dataset:
         self.features = dataset_train
         self.targets = dataset_test
         self.column_names = column_names
+        
+        self.dataframe_feats = pd.DataFrame(
+            self.features[:, 1:-1], columns=self.column_names[1:-2]
+        )
 
     def __call__(self):
         return 0
@@ -20,10 +24,6 @@ class Dataset:
         """
         Corrolation plot for all the features in the dataset
         """
-
-        self.dataframe_feats = pd.DataFrame(
-            self.features[:, 1:-1], columns=self.column_names[1:-2]
-        )
 
         plt.figure(figsize=(40, 40))
         plt.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)

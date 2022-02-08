@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import xgboost as xgb
 
 
+
 class SupervisedSolver:
     def __init__(self, features, targets):
         self.featuresTrain = features
@@ -140,6 +141,18 @@ class SupervisedSolver:
             f"#Events have been changed from {self.nrEvents} to {len(self.featuresTrain)}"
         )
 
+    def callModelSave(self):
+        state = True
+        while state == True:
+            answ = input("Do you want to save model? (y/n) ")
+            if answ == "y":
+                name = input("name: ")
+                self.saveModel(name)
+                state = False
+                print("Model saved")
+            elif answ == "n":
+                state = False
+                print("Model not saved")
 
 if __name__ == "__main__":
     import time
@@ -165,11 +178,10 @@ if __name__ == "__main__":
     SS.removeOutliers(3)
 
     SS.featuresTrain, X_test, SS.targetsTrain, y_test = train_test_split(
-        SS.featuresTrain, SS.targetsTrain, test_size=0.15
+        SS.featuresTrain, SS.targetsTrain, test_size=0.2
     )
 
-    SS.getModel("neuralNetwork", epochs=100, batchSize=4000, depth=3)
-
+    SS.getModel("neuralNetwork", epochs=50, batchSize=1000, depth=3)
     SS.train()
     SS.plotAccuracy()
 
@@ -179,12 +191,15 @@ if __name__ == "__main__":
     total_n = t1 - t0
     print("{:.2f}s".format(total_n))
     # SS.plotModel()
-
-    SS.saveModel("tanh_medium_net_model")
+    
+    if SS.tool == "tf":
+        SS.callModelSave()
+        
+        
 
     # pip install pywhatkit
     if SS.acc > 90:
         import pywhatkit
 
-        songOrArtist = input()
+        songOrArtist = "celebration"
         pywhatkit.playonyt(songOrArtist)

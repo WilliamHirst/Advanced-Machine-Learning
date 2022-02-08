@@ -36,19 +36,20 @@ class Model(SupervisedSolver):
         model = tf.keras.Sequential(
             [
                 tf.keras.layers.Dense(
-                    100,
-                    activation="tanh",
+                    500,
+                    activation=tf.keras.layers.LeakyReLU(alpha=0.01),
                     input_shape=(self.nrFeatures,),
                 ),
+                tf.keras.layers.Dense(800, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 tf.keras.layers.Dense(1000, activation="tanh"),
-                tf.keras.layers.Dense(1200, activation="tanh"),
                 tf.keras.layers.Dropout(0.5),
-                tf.keras.layers.Dense(1200, activation="tanh"),
+                tf.keras.layers.Dense(1100, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
+                
+                tf.keras.layers.Dropout(0.5),   
                 tf.keras.layers.Dense(1000, activation="tanh"),
-                tf.keras.layers.Dense(500, activation="tanh"),
-                tf.keras.layers.Dense(100, activation="tanh"),
-                tf.keras.layers.Dense(50, activation="tanh"),
-                tf.keras.layers.Dense(20, activation="tanh"),
+                tf.keras.layers.Dense(500, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
+                tf.keras.layers.Dense(100, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
+                tf.keras.layers.Dense(20, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
