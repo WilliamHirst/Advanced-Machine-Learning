@@ -40,19 +40,21 @@ class Model(SupervisedSolver):
                     activation=tf.keras.layers.LeakyReLU(alpha=0.01),
                     input_shape=(self.nrFeatures,),
                 ),
-                tf.keras.layers.Dense(800, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
-                tf.keras.layers.Dense(1000, activation="tanh"),
+                tf.keras.layers.Dense(800, activation="tanh"),
+                tf.keras.layers.Dense(1000, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 tf.keras.layers.Dropout(0.5),
-                tf.keras.layers.Dense(1100, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
+                tf.keras.layers.Dense(1300, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 
                 tf.keras.layers.Dropout(0.5),   
-                tf.keras.layers.Dense(1000, activation="tanh"),
-                tf.keras.layers.Dense(500, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
-                tf.keras.layers.Dense(100, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
-                tf.keras.layers.Dense(20, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
+                tf.keras.layers.Dense(1100, activation="tanh"),
+                tf.keras.layers.Dense(600, activation="tanh"),
+                tf.keras.layers.Dropout(0.5), 
+                tf.keras.layers.Dense(200, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
+                tf.keras.layers.Dense(50, activation="tanh"),
                 tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
+        
         self.optimizer = optimizers.Adam()
         model.compile(
             loss="binary_crossentropy", optimizer=self.optimizer, metrics=["accuracy"]
@@ -133,7 +135,7 @@ class Model(SupervisedSolver):
         model.compile(
             loss="binary_crossentropy",
             metrics=["accuracy"],
-            optimizer=optimizers.Adam(),
+            optimizer=optimizer,
         )
 
         self.fit = lambda X, y: self.model.fit(

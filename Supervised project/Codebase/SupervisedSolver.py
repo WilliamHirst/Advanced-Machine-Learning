@@ -90,6 +90,17 @@ class SupervisedSolver:
         plt.xlabel("epoch")
         plt.legend(["train", "test"], loc="upper left")
         plt.show()
+        
+    def plotLoss(self):
+        """
+        Plots the history of the accuracy of the predictions.
+        """
+        plt.plot(self.trainModel.history["loss"])
+        plt.title("Model Accuracy")
+        plt.ylabel("Loss")
+        plt.xlabel("epoch")
+        plt.legend(["train", "test"], loc="upper left")
+        plt.show()
 
     def removeBadFeatures(self, procentage=30):
         """
@@ -172,18 +183,19 @@ if __name__ == "__main__":
 
     SS = SupervisedSolver(featuresTrain[:, 1:-1], targetsTrain)
 
-    SS.removeBadFeatures(30)
+    #SS.removeBadFeatures(30)
     SS.setNanToMean(SS.featuresTrain)
     SS.standardScale(SS.featuresTrain)
-    SS.removeOutliers(3)
+    #SS.removeOutliers(4)
 
     SS.featuresTrain, X_test, SS.targetsTrain, y_test = train_test_split(
         SS.featuresTrain, SS.targetsTrain, test_size=0.2
     )
 
-    SS.getModel("neuralNetwork", epochs=50, batchSize=1000, depth=3)
+    SS.getModel("neuralNetwork", epochs=10, batchSize=10000, depth=3)
     SS.train()
-    SS.plotAccuracy()
+    #SS.plotAccuracy()
+    #SS.plotLoss()
 
     SS.predict(X_test, y_test)
 
@@ -192,14 +204,16 @@ if __name__ == "__main__":
     print("{:.2f}s".format(total_n))
     # SS.plotModel()
     
+    # pip install pywhatkit
+    if SS.acc > 82:
+        import pywhatkit
+
+        songOrArtist = "celebration"
+        pywhatkit.playonyt(songOrArtist)
+    
     if SS.tool == "tf":
         SS.callModelSave()
         
         
 
-    # pip install pywhatkit
-    if SS.acc > 90:
-        import pywhatkit
-
-        songOrArtist = "celebration"
-        pywhatkit.playonyt(songOrArtist)
+    
