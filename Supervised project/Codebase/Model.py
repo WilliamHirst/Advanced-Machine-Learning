@@ -39,6 +39,9 @@ class Model(SupervisedSolver):
                 tf.keras.layers.Dense(
                     100, activation="relu", input_shape=(self.nrFeatures,)
                 ),
+                tf.keras.layers.Dense(1000, activation="relu"),
+                tf.keras.layers.Dense(1000, activation="relu"),
+                tf.keras.layers.Dense(500, activation="relu"),
                 tf.keras.layers.Dense(100, activation="relu"),
                 tf.keras.layers.Dense(50, activation="relu"),
                 tf.keras.layers.Dense(20, activation="relu"),
