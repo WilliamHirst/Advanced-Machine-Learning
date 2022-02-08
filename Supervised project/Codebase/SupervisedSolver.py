@@ -57,26 +57,6 @@ class SupervisedSolver:
     FUNCTIONS
     """
     
-    def removeBadFeatures(self, procentage = 30):
-        """
-        Removes all bad features. 
-        """
-        self.findBadFeatures(procentage)
-        self.featuresTrain = np.delete(self.featuresTrain, self.badFeatures, 1) 
-        self.nrFeatures = len(self.featuresTrain[0])
-
-
-    def findBadFeatures(self,procentage):
-        """
-        Finds all features with a certain precentage of nan values.
-        """
-        badFeatures = []
-        for i in range(self.nrFeatures):
-            nrOfNan = np.sum(np.where(np.isnan(self.featuresTrain[:,i]), 1, 0))
-            featuresProcentage = nrOfNan/self.nrEvents * 100
-            if featuresProcentage >= procentage:   
-                badFeatures.append(i) 
-        self.badFeatures = np.asarray(badFeatures)
 
 
     def significantEvents(self, s, b):
@@ -107,7 +87,27 @@ class SupervisedSolver:
         plt.xlabel('epoch')
         plt.legend(['train', 'test'], loc='upper left')
         plt.show()
-    
+
+    def removeBadFeatures(self, procentage = 30):
+        """
+        Removes all bad features. 
+        """
+        self.findBadFeatures(procentage)
+        self.featuresTrain = np.delete(self.featuresTrain, self.badFeatures, 1) 
+        self.nrFeatures = len(self.featuresTrain[0])
+
+
+    def findBadFeatures(self,procentage):
+        """
+        Finds all features with a certain precentage of nan values.
+        """
+        badFeatures = []
+        for i in range(self.nrFeatures):
+            nrOfNan = np.sum(np.where(np.isnan(self.featuresTrain[:,i]), 1, 0))
+            featuresProcentage = nrOfNan/self.nrEvents * 100
+            if featuresProcentage >= procentage:   
+                badFeatures.append(i) 
+        self.badFeatures = np.asarray(badFeatures)
 
     def standardScale(self, *args):
         avg_data = np.nanmean(args[0], axis = 1)
@@ -125,6 +125,17 @@ class SupervisedSolver:
                                                 np.nanmean(args[0][:,i]),  
                                                 args[0][:,i] )
         return args[0]
+    
+    def removeOutliers(self,sigma):
+        arr = self.featuresTrain
+        std = np.nanstd(arr, axis = 0)
+        mean = np.nanmean(arr, axis = 0)
+
+        check = np.abs(arr - mean)
+        isLess = np.less_equal(check, sigma*std)
+        self.featuresTrain = arr[np.all(isLess,axis = 1)]
+        self.targetsTrain = self.targetsTrain[np.all(isLess,axis = 1)]
+        print(f"#Events have been changed from {self.nrEvents} to {len(self.featuresTrain)}")
 
         
 
@@ -149,10 +160,12 @@ if __name__ == "__main__":
     SS.removeBadFeatures(30)
     SS.setNanToMean(SS.featuresTrain)
     SS.standardScale(SS.featuresTrain)
+    SS.removeOutliers(3)
+  
 
     SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
 
-    SS.getModel("GRU_NN", epochs = 100, batchSize= 4000, depth = 3)
+    SS.getModel("neuralNetwork", epochs = 100, batchSize= 4000, depth = 3)
 
     SS.train()
     SS.plotAccuracy()
