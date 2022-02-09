@@ -157,18 +157,18 @@ if __name__ == "__main__":
 
     SS = SupervisedSolver(featuresTrain[:,1:-1], targetsTrain)   
 
-    SS.removeBadFeatures(30)
-    SS.setNanToMean(SS.featuresTrain)
+    #SS.removeBadFeatures(30)
+    #SS.setNanToMean(SS.featuresTrain)
     SS.standardScale(SS.featuresTrain)
-    SS.removeOutliers(3)
+    #SS.removeOutliers(3)
   
 
     SS.featuresTrain, X_test,  SS.targetsTrain, y_test = train_test_split(SS.featuresTrain, SS.targetsTrain, test_size = 0.15)
 
-    SS.getModel("neuralNetwork", epochs = 100, batchSize= 4000, depth = 3)
+    SS.getModel("xGBoost", epochs = 100, batchSize= 4000, depth = 6)
 
     SS.train()
-    SS.plotAccuracy()
+    #SS.plotAccuracy()
 
 
     SS.predict(X_test, y_test)
