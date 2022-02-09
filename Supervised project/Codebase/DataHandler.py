@@ -75,11 +75,17 @@ class DataHandler:
 
     
     def fixDataset(self):
-        from sklearn.impute import SimpleImputer
-        impute_mean = SimpleImputer(missing_values=np.NaN, strategy="mean")
+        #from sklearn.impute import SimpleImputer
+        from sklearn.experimental import enable_iterative_imputer
+        from sklearn.impute import IterativeImputer
+        
+        impute_mean = IterativeImputer(missing_values=np.NaN, 
+                                       initial_strategy="mean", 
+                                       max_iter=1, 
+                                       random_state=0)
         impute_mean.fit(self.X_train)
         
-        SimpleImputer()
+        IterativeImputer(random_state=0)
         self.X_train = impute_mean.transform(self.X_train)
         
         
