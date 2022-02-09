@@ -113,8 +113,12 @@ class SupervisedSolver:
         plt.xlabel("epoch")
         plt.legend(["train", "test"], loc="upper left")
         plt.show()
-    
-    
+
+    def importDataSet(dataSet):
+        featuresTrain = np.load("../Data/featuresTrain.npy")
+        targetsTrain = np.load("../Data/targetsTrain.npy")
+
+
 
     
 

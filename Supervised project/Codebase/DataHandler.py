@@ -3,8 +3,12 @@ from sklearn.model_selection import train_test_split
 
 class DataHandler:
     def __init__(self, features = None, targets = None):
-        self.X_train = features
-        self.y_train = targets
+        if isinstance(features, str):
+            self.importDataSet(features, targets)
+        else:     
+            self.X_train = features
+            self.y_train = targets
+
         self.nrEvents = len(self.y_train)
         self.nrFeatures = len(features[0])
 
@@ -68,5 +72,8 @@ class DataHandler:
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
         self.X_train, self.y_train, test_size=0.2
         )
-
+        
+    def importDataSet(self, train, test):
+        self.X_train = np.load("../Data/" + train)
+        self.y_train = np.load("../Data/" + test)
     
