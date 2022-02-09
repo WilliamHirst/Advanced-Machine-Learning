@@ -146,12 +146,15 @@ if __name__ == "__main__":
     # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
     DH = DataHandler(featuresTrain[:, 1:-1], targetsTrain)
-
-    # DH.removeBadFeatures(30)
-    DH.setNanToMean(DH.X_train)
-    DH.standardScale(DH.X_train)
-    # DH.removeOutliers(4)
+    DH.fixDataset()
+    DH.standardScale()
     DH.split()
+    
+    #DH.removeBadFeatures(30)
+    #DH.setNanToMean(DH.X_train)
+    
+    #DH.removeOutliers(4)
+    
 
     X_train, X_test, y_train, y_test = DH(include_test = True)
 
@@ -181,6 +184,7 @@ if __name__ == "__main__":
         import pywhatkit
 
         songOrArtist = "celebration"
+        print("It's time to boogie!!")
         pywhatkit.playonyt(songOrArtist)
 
     if SS.tool == "tf":

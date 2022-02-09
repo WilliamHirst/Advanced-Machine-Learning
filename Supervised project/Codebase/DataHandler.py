@@ -35,22 +35,25 @@ class DataHandler:
                 badFeatures.append(i)
         self.badFeatures = np.asarray(badFeatures)
 
-    def standardScale(self, *args):
-        avg_data = np.nanmean(args[0], axis=1)
-        std_data = np.nanstd(args[0], axis=1)
-        for i in range(len(args[0][0])):
-            args[0][:, i] = (args[0][:, i] - avg_data[i]) / (std_data)
-        return args[0]
+    def standardScale(self):
+        arr = self.X_train
+        avg_data = np.nanmean(arr, axis=1)
+        std_data = np.nanstd(arr, axis=1)
+        for i in range(len(arr[0])):
+            arr[:, i] = (arr[:, i] - avg_data[i]) / (std_data)
+            
+        self.X_train = arr
 
-    def setNanToMean(self, *args):
+    def setNanToMean(self):
         """
         Fills all nan values with the avarage value of the certain feature.
         """
+        arr = self.X_train
         for i in range(self.nrFeatures):
-            args[0][:, i] = np.where(
-                np.isnan(args[0][:, i]), np.nanmean(args[0][:, i]), args[0][:, i]
+            arr[:, i] = np.where(
+                np.isnan(arr[:, i]), np.nanmean(arr[:, i]), arr[:, i]
             )
-        return args[0]
+        self.X_train = arr
 
     def removeOutliers(self, sigma):
         arr = self.X_train
@@ -64,9 +67,20 @@ class DataHandler:
         print(
             f"#Events have been changed from {self.nrEvents} to {len(self.X_train)}"
         )
+        
     def split(self, t_size = 0.2):
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-        self.X_train, self.y_train, test_size=0.2
+        self.X_train, self.y_train, test_size=t_size
         )
 
     
+    def fixDataset(self):
+        from sklearn.impute import SimpleImputer
+        impute_mean = SimpleImputer(missing_values=np.NaN, strategy="mean")
+        impute_mean.fit(self.X_train)
+        
+        SimpleImputer()
+        self.X_train = impute_mean.transform(self.X_train)
+        
+        
+        
