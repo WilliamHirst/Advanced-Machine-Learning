@@ -34,7 +34,9 @@ class SupervisedSolver:
         self.background_nr = self.nr_of_events - self.signal_nr
 
         print(
-            f"Background: {self.background_nr} -- Signal: {self.signal_nr} -- Total events {self.nr_of_events}"
+            "Background: {} -- Signal: {} -- Total events {}".format(
+                self.background_nr, self.signal_nr, self.nr_of_events
+            )
         )
         self.acc = (
             np.sum(np.equal(predict, targetTest.ravel())) / self.nr_of_events * 100
@@ -203,7 +205,7 @@ if __name__ == "__main__":
     )
     # with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
 
-    SS.getModel("neuralNetwork", epochs=50, batchSize=10000, depth=3)
+    SS.getModel("neuralNetwork", epochs=5, batchSize=10000, depth=3)
     SS.train()
     SS.plotAccuracy()
     SS.plotLoss()
@@ -216,7 +218,7 @@ if __name__ == "__main__":
     # SS.plotModel()
 
     # pip install pywhatkit
-    if SS.acc > 90:
+    if SS.acc >= 85:
         import pywhatkit
 
         songOrArtist = "celebration"
