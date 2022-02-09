@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.model_selection import train_test_split
 
 class DataHandler:
     def __init__(self, features = None, targets = None):
@@ -73,10 +72,11 @@ class DataHandler:
         )
         
     def split(self, t_size = 0.2):
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-        self.X_train, self.y_train, test_size=t_size
-        )
+        from sklearn.model_selection import train_test_split
 
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+        self.X_train, self.y_train, test_size=t_size)
+        
     
     def fixDataset(self):
         #from sklearn.impute import SimpleImputer
@@ -92,9 +92,14 @@ class DataHandler:
         IterativeImputer(random_state=0)
         self.X_train = impute_mean.transform(self.X_train)
         
-     def importDataSet(self, train, test):
-        self.X_train = np.load("../Data/" + train)
-        self.y_train = np.load("../Data/" + test)
-    
+    def importDataSet(self, train, test):
+        self.X_train = np.load("../Data/{train}")
+        self.y_train = np.load("../Data/{test}")
+
+    def saveDataSet(self, featureName, targetName ):
+        np.save(f"../Data/{featureName}", self.X_train)
+        np.save(f"../Data/{targetName}", self.y_train)
+        print(f"New dataset saved as {featureName} and {targetName} in folder: Data")
+
         
         
