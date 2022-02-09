@@ -157,14 +157,18 @@ class Model(SupervisedSolver):
         self.model = model
 
     def xGBoost(self):
-        # Prefers max_depth = 5
-        self.fit = lambda X, y: self.model.fit(X, y)
-        self.model = xgb.XGBClassifier(
-            max_depth=self.depth,
-            use_label_encoder=False,
-            objective="binary:logistic",
-            eval_metric="logloss",
-            tree_method="hist",
-            eta=0.1,
-        )
+        #Prefers max_depth = 5
+       
+
+        self.model = xgb.XGBClassifier(max_depth=self.depth,
+                                       use_label_encoder=False,
+                                       objective = "binary:logistic",
+                                       n_estimators=800,
+                                       eval_metric = "logloss",
+                                       tree_method = "hist",
+                                       eta = 0.1,
+                                       )
+
+        self.fit = lambda X, y: self.model.fit(X, y) 
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
+
