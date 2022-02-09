@@ -44,7 +44,7 @@ class Model(SupervisedSolver):
                 tf.keras.layers.Dense(1000, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 tf.keras.layers.Dropout(0.5),
                 tf.keras.layers.Dense(1300, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
-                
+                tf.keras.layers.GaussianNoise(0.5),
                 tf.keras.layers.Dropout(0.5),   
                 tf.keras.layers.Dense(1100, activation="tanh"),
                 tf.keras.layers.Dense(600, activation="tanh"),

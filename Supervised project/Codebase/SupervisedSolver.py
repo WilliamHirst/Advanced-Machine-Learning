@@ -138,8 +138,8 @@ if __name__ == "__main__":
     import time
 
     # Load data from npy storage. Must have run ReadFile.py first
-    featuresTrain = np.load("../Data/featuresTrain.npy")
-    targetsTrain = np.load("../Data/targetsTrain.npy")
+    rawFeatures_TR = np.load("../Data/rawFeatures_TR.npy")
+    rawTargets_TR = np.load("../Data/rawTargets_TR.npy")
     # featuresTest = np.load("../Data/featuresTest.npy")
 
    
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # Place tensors on the CPU
     # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
-    DH = DataHandler(featuresTrain[:, 1:-1], targetsTrain)
+    DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     DH.fixDataset()
     DH.standardScale()
     DH.split()

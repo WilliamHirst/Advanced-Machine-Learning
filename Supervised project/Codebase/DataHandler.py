@@ -93,8 +93,8 @@ class DataHandler:
         self.X_train = impute_mean.transform(self.X_train)
         
     def importDataSet(self, train, test):
-        self.X_train = np.load("../Data/{train}")
-        self.y_train = np.load("../Data/{test}")
+        self.X_train = np.load(f"../Data/{train}")
+        self.y_train = np.load(f"../Data/{test}")
 
     def saveDataSet(self, featureName, targetName ):
         np.save(f"../Data/{featureName}", self.X_train)

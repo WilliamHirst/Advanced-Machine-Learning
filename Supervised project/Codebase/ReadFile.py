@@ -35,9 +35,9 @@ column_names = np.asarray(column_names)
 
 
 
-np.save("../Data/featuresTrain.npy", features)
-np.save("../Data/targetsTrain.npy", targets)
-np.save("../Data/column_names.npy", column_names)
+np.save("../Data/rawFeatures_TR.npy", features[:, 1:-1])
+np.save("../Data/rawTargets_TR.npy", targets)
+np.save("../Data/column_names.npy", column_names[1:-1])
 
 file = open("../Data/test.csv")
 csvreader = csv.reader(file)
