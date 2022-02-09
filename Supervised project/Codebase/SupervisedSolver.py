@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import xgboost as xgb
 
 
-
 class SupervisedSolver:
     def __init__(self, features, targets):
         self.featuresTrain = features
@@ -30,17 +29,27 @@ class SupervisedSolver:
 
         predict = self.model_predict(featuresTest)
 
+        self.nr_of_events = len(predict)
+        self.signal_nr = np.sum(predict)
+        self.background_nr = self.nr_of_events - self.signal_nr
+
         print(
-            f"Background: {len(predict)-np.sum(predict)} -- Signal: {np.sum(predict)} -- Total events {len(predict)}"
+            f"Background: {self.background_nr} -- Signal: {self.signal_nr} -- Total events {self.nr_of_events}"
         )
-        self.acc = np.sum(np.equal(predict, targetTest.ravel())) / len(predict) * 100
+        self.acc = (
+            np.sum(np.equal(predict, targetTest.ravel())) / self.nr_of_events * 100
+        )
         print(f"Accuracy: {self.acc:.1f}%")
 
-    def accuracy(self, featuresTest, targetTest):
+        self.missed_events = predict[np.where(predict != targetTest.ravel())[0]]
+        self.number_wrong_prediction = np.sum(self.missed_events)
+        self.number_missed = len(self.missed_events) - self.number_wrong_prediction
 
-        predict = self.model_predict(featuresTest)
-        ac = np.sum(np.around(targetTest) == np.around(predict)) / self.nrEvents
-        return ac
+        print(
+            "Number of wrong classified: {} \nNumber of missed events: {}".format(
+                self.number_wrong_prediction, self.number_missed
+            )
+        )
 
     """
     TF-MODEL
@@ -90,7 +99,7 @@ class SupervisedSolver:
         plt.xlabel("epoch")
         plt.legend(["train", "test"], loc="upper left")
         plt.show()
-        
+
     def plotLoss(self):
         """
         Plots the history of the accuracy of the predictions.
@@ -165,6 +174,7 @@ class SupervisedSolver:
                 state = False
                 print("Model not saved")
 
+
 if __name__ == "__main__":
     import time
 
@@ -183,19 +193,20 @@ if __name__ == "__main__":
 
     SS = SupervisedSolver(featuresTrain[:, 1:-1], targetsTrain)
 
-    #SS.removeBadFeatures(30)
+    # SS.removeBadFeatures(30)
     SS.setNanToMean(SS.featuresTrain)
     SS.standardScale(SS.featuresTrain)
-    #SS.removeOutliers(4)
+    # SS.removeOutliers(4)
 
     SS.featuresTrain, X_test, SS.targetsTrain, y_test = train_test_split(
         SS.featuresTrain, SS.targetsTrain, test_size=0.2
     )
+    # with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
 
-    SS.getModel("neuralNetwork", epochs=10, batchSize=10000, depth=3)
+    SS.getModel("neuralNetwork", epochs=50, batchSize=10000, depth=3)
     SS.train()
-    #SS.plotAccuracy()
-    #SS.plotLoss()
+    SS.plotAccuracy()
+    SS.plotLoss()
 
     SS.predict(X_test, y_test)
 
@@ -203,17 +214,13 @@ if __name__ == "__main__":
     total_n = t1 - t0
     print("{:.2f}s".format(total_n))
     # SS.plotModel()
-    
+
     # pip install pywhatkit
-    if SS.acc > 82:
+    if SS.acc > 90:
         import pywhatkit
 
         songOrArtist = "celebration"
         pywhatkit.playonyt(songOrArtist)
-    
+
     if SS.tool == "tf":
         SS.callModelSave()
-        
-        
-
-    
