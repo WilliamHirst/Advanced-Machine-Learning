@@ -176,6 +176,17 @@ class SupervisedSolver:
                 state = False
                 print("Model not saved")
 
+    @staticmethod
+    def fixDataset(dataset):
+        from sklearn.impute import SimpleImputer
+        impute_mean = SimpleImputer(missing_values=np.NaN, strategy="mean")
+        impute_mean.fit(dataset)
+        
+        SimpleImputer()
+        imputed_dataset = impute_mean.transform(dataset)
+        
+        
+        return imputed_dataset
 
 if __name__ == "__main__":
     import time
@@ -191,21 +202,30 @@ if __name__ == "__main__":
 
     # Place tensors on the CPU
     # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+    fixed_dataset = SupervisedSolver.fixDataset(featuresTrain[:, 1:-1])
     t0 = time.time()
 
-    SS = SupervisedSolver(featuresTrain[:, 1:-1], targetsTrain)
+    # Remove event id, weight from dataset, as they are features not
+    # put in by creator of dataset and not from the simulation itself
+    
+    #SS = SupervisedSolver(featuresTrain[:, 1:-1], targetsTrain)
 
-    # SS.removeBadFeatures(30)
-    SS.setNanToMean(SS.featuresTrain)
+    SS = SupervisedSolver(fixed_dataset, targetsTrain)
+    
+    
+    
+    
+    #SS.removeBadFeatures(40)
+    #SS.setNanToMean(SS.featuresTrain)
     SS.standardScale(SS.featuresTrain)
-    # SS.removeOutliers(4)
+    #SS.removeOutliers(4)
 
     SS.featuresTrain, X_test, SS.targetsTrain, y_test = train_test_split(
         SS.featuresTrain, SS.targetsTrain, test_size=0.2
     )
     # with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
 
-    SS.getModel("neuralNetwork", epochs=5, batchSize=10000, depth=3)
+    SS.getModel("neuralNetwork", epochs=100, batchSize=10000, depth=3)
     SS.train()
     SS.plotAccuracy()
     SS.plotLoss()
