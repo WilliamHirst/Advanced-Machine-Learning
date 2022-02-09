@@ -1,5 +1,6 @@
 import numpy as np
 import Model as M
+from DataHandler import DataHandler
 import tensorflow as tf
 from tensorflow.keras import optimizers  # If we need regularizers
 from sklearn.model_selection import train_test_split
@@ -112,56 +113,10 @@ class SupervisedSolver:
         plt.xlabel("epoch")
         plt.legend(["train", "test"], loc="upper left")
         plt.show()
+    
+    
 
-    def removeBadFeatures(self, procentage=30):
-        """
-        Removes all bad features.
-        """
-        self.findBadFeatures(procentage)
-        self.featuresTrain = np.delete(self.featuresTrain, self.badFeatures, 1)
-        self.nrFeatures = len(self.featuresTrain[0])
-
-    def findBadFeatures(self, procentage):
-        """
-        Finds all features with a certain precentage of nan values.
-        """
-        badFeatures = []
-        for i in range(self.nrFeatures):
-            nrOfNan = np.sum(np.where(np.isnan(self.featuresTrain[:, i]), 1, 0))
-            featuresProcentage = nrOfNan / self.nrEvents * 100
-            if featuresProcentage >= procentage:
-                badFeatures.append(i)
-        self.badFeatures = np.asarray(badFeatures)
-
-    def standardScale(self, *args):
-        avg_data = np.nanmean(args[0], axis=1)
-        std_data = np.nanstd(args[0], axis=1)
-        for i in range(len(args[0][0])):
-            args[0][:, i] = (args[0][:, i] - avg_data[i]) / (std_data)
-        return args[0]
-
-    def setNanToMean(self, *args):
-        """
-        Fills all nan values with the avarage value of the certain feature.
-        """
-        for i in range(self.nrFeatures):
-            args[0][:, i] = np.where(
-                np.isnan(args[0][:, i]), np.nanmean(args[0][:, i]), args[0][:, i]
-            )
-        return args[0]
-
-    def removeOutliers(self, sigma):
-        arr = self.featuresTrain
-        std = np.nanstd(arr, axis=0)
-        mean = np.nanmean(arr, axis=0)
-
-        check = np.abs(arr - mean)
-        isLess = np.less_equal(check, sigma * std)
-        self.featuresTrain = arr[np.all(isLess, axis=1)]
-        self.targetsTrain = self.targetsTrain[np.all(isLess, axis=1)]
-        print(
-            f"#Events have been changed from {self.nrEvents} to {len(self.featuresTrain)}"
-        )
+    
 
     def callModelSave(self):
         state = True
@@ -176,17 +131,6 @@ class SupervisedSolver:
                 state = False
                 print("Model not saved")
 
-    @staticmethod
-    def fixDataset(dataset):
-        from sklearn.impute import SimpleImputer
-        impute_mean = SimpleImputer(missing_values=np.NaN, strategy="mean")
-        impute_mean.fit(dataset)
-        
-        SimpleImputer()
-        imputed_dataset = impute_mean.transform(dataset)
-        
-        
-        return imputed_dataset
 
 if __name__ == "__main__":
     import time
@@ -196,36 +140,31 @@ if __name__ == "__main__":
     targetsTrain = np.load("../Data/targetsTrain.npy")
     # featuresTest = np.load("../Data/featuresTest.npy")
 
+   
+
+    # Place tensors on the CPU
+    # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
+    t0 = time.time()
+    DH = DataHandler(featuresTrain[:, 1:-1], targetsTrain)
+
+    # DH.removeBadFeatures(30)
+    DH.setNanToMean(DH.X_train)
+    DH.standardScale(DH.X_train)
+    # DH.removeOutliers(4)
+    DH.split()
+
+    X_train, X_test, y_train, y_test = DH(include_test = True)
+
     """
     Model types: neuralNetwork -- convNeuralNetwork -- GRU_NN -- decisionTree -- xGBoost 
     """
 
-    # Place tensors on the CPU
-    # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-    fixed_dataset = SupervisedSolver.fixDataset(featuresTrain[:, 1:-1])
-    t0 = time.time()
+    SS = SupervisedSolver(X_train, y_train)
 
-    # Remove event id, weight from dataset, as they are features not
-    # put in by creator of dataset and not from the simulation itself
-    
-    #SS = SupervisedSolver(featuresTrain[:, 1:-1], targetsTrain)
 
-    SS = SupervisedSolver(fixed_dataset, targetsTrain)
-    
-    
-    
-    
-    #SS.removeBadFeatures(40)
-    #SS.setNanToMean(SS.featuresTrain)
-    SS.standardScale(SS.featuresTrain)
-    #SS.removeOutliers(4)
-
-    SS.featuresTrain, X_test, SS.targetsTrain, y_test = train_test_split(
-        SS.featuresTrain, SS.targetsTrain, test_size=0.2
-    )
     # with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
 
-    SS.getModel("neuralNetwork", epochs=100, batchSize=10000, depth=3)
+    SS.getModel("neuralNetwork", epochs=5, batchSize=10000, depth=3)
     SS.train()
     SS.plotAccuracy()
     SS.plotLoss()
@@ -246,3 +185,4 @@ if __name__ == "__main__":
 
     if SS.tool == "tf":
         SS.callModelSave()
+

@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 class DataHandler:
-    def __init__(self, features, targets):
+    def __init__(self, features = None, targets = None):
         self.X_train = features
         self.y_train = targets
         self.nrEvents = len(self.y_train)
