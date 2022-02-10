@@ -65,9 +65,13 @@ class Model(SupervisedSolver):
                       metrics=["accuracy"]
                      )
         
-        self.fit = lambda X, y: self.model.fit(
-            X, y, epochs=self.epochs, batch_size=self.batchSize, callbacks=[self.callback]
-                            )
+        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(
+                          X_train, y_train, 
+                          validation_data=(X_val, y_val), 
+                          epochs=self.epochs, 
+                          batch_size=self.batchSize, 
+                          callbacks=[self.callback]
+                          )
         self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
         self.model.summary()
@@ -105,9 +109,11 @@ class Model(SupervisedSolver):
             metrics=["accuracy"],
         )
 
-        self.fit = lambda X, y: self.model.fit(
-            X.reshape(X.shape[0], X.shape[1], 1),
-            y.reshape(y.shape[0], 1, 1),
+        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(
+            X_train.reshape(X_train.shape[0], X_train.shape[1], 1),
+            y_train.reshape(y_train.shape[0], 1, 1),
+            validation_data=(X_val.reshape(X_val.shape[0], X_val.shape[1], 1), 
+                             y_val.reshape(y_val.shape[0], 1, 1)), 
             epochs=self.epochs,
             batch_size=self.batchSize,
         )
@@ -144,9 +150,10 @@ class Model(SupervisedSolver):
             optimizer=optimizer,
         )
 
-        self.fit = lambda X, y: self.model.fit(
-            X.reshape(X.shape[0], X.shape[1], 1),
-            y.reshape(y.shape[0], 1, 1),
+        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(
+            X_train.reshape(X_train.shape[0], X_train.shape[1], 1),
+            y_train.reshape(y_train.shape[0], 1, 1),
+            validation_data=(X_val, y_val), 
             epochs=self.epochs,
             batch_size=self.batchSize,
         )
@@ -170,11 +177,11 @@ class Model(SupervisedSolver):
                                        use_label_encoder=False,
                                        objective = "binary:logistic",
                                        n_estimators=800,
-                                       eval_metric = "logloss",
+                                       eval_metric = "error",
                                        tree_method = "hist",
                                        eta = 0.1,
                                        )
 
-        self.fit = lambda X, y: self.model.fit(X, y) 
+        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)]) 
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 

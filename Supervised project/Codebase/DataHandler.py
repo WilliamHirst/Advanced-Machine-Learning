@@ -78,7 +78,7 @@ class DataHandler:
         self.X_train, self.y_train, test_size=t_size)
         
     
-    def fixDataset(self):
+    def fillWithImputer(self):
         #from sklearn.impute import SimpleImputer
         from sklearn.experimental import enable_iterative_imputer
         from sklearn.impute import IterativeImputer

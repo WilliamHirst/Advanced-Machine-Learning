@@ -9,11 +9,13 @@ import xgboost as xgb
 
 
 class SupervisedSolver:
-    def __init__(self, features, targets):
-        self.featuresTrain = features
-        self.targetsTrain = targets
-        self.nrEvents = len(self.targetsTrain)
-        self.nrFeatures = len(features[0])
+    def __init__(self, X_train, y_train, X_val, y_val):
+        self.X_train = X_train
+        self.y_train = y_train
+        self.X_val = X_val
+        self.y_val = y_val
+        self.nrEvents = len(self.y_train)
+        self.nrFeatures = len(X_train[0])
 
     def getModel(self, method, epochs=100, batchSize=100, depth=10):
         m = M.Model(method, self.nrFeatures, epochs, batchSize, depth)
@@ -23,7 +25,7 @@ class SupervisedSolver:
         self.model = m()
 
     def train(self):
-        self.trainModel = self.fit(self.featuresTrain, self.targetsTrain)
+        self.trainModel = self.fit(self.X_train, self.y_train, self.X_val, self.y_val)
         return 0
 
     def predict(self, featuresTest, targetTest):
@@ -141,33 +143,33 @@ if __name__ == "__main__":
     # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-    DH.fixDataset()
+    DH.fillWithImputer()
     DH.standardScale()
     DH.split()
     
     #DH.removeBadFeatures(30)
-    #DH.setNanToMean(DH.X_train)
+    
     
     #DH.removeOutliers(4)
     
 
-    X_train, X_test, y_train, y_test = DH(include_test = True)
+    X_train, X_val, y_train, y_val = DH(include_test = True)
 
     """
     Model types: neuralNetwork -- convNeuralNetwork -- GRU_NN -- decisionTree -- xGBoost 
     """
 
-    SS = SupervisedSolver(X_train, y_train)
+    SS = SupervisedSolver(X_train, y_train, X_val, y_val)
 
 
     with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("neuralNetwork", epochs=1000, batchSize=4000, depth=3)
+        SS.getModel("convNeuralNetwork", epochs=1000, batchSize=4000, depth=6)
         SS.train()
-        SS.plotAccuracy()
-        SS.plotLoss()
+        
+        
 
-        SS.predict(X_test, y_test)
+        SS.predict(X_val, y_val)
 
         t1 = time.time()
         total_n = t1 - t0
@@ -183,5 +185,7 @@ if __name__ == "__main__":
         pywhatkit.playonyt(songOrArtist)
 
     if SS.tool == "tf":
+        SS.plotAccuracy()
+        SS.plotLoss()
         SS.callModelSave()
 
