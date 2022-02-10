@@ -20,6 +20,12 @@ class Model(SupervisedSolver):
         self.epochs = epochs
         self.batchSize = batchSize
         self.depth = depth
+
+        self.callback = tf.keras.callbacks.TensorBoard(log_dir="../Logs",  
+                                                       update_freq='epoch',
+                                                       histogram_freq = 10)
+
+
         self.initMethod()
 
     def __call__(self):
@@ -36,32 +42,32 @@ class Model(SupervisedSolver):
         model = tf.keras.Sequential(
             [
                 tf.keras.layers.Dense(
-                    500,
+                    50,
                     activation=tf.keras.layers.LeakyReLU(alpha=0.01),
                     input_shape=(self.nrFeatures,),
                 ),
-                tf.keras.layers.Dense(800, activation="tanh"),
-                tf.keras.layers.Dense(1000, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 tf.keras.layers.Dropout(0.5),
-                tf.keras.layers.Dense(1300, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
-                tf.keras.layers.GaussianNoise(0.5),
-                tf.keras.layers.Dropout(0.5),   
-                tf.keras.layers.Dense(1100, activation="tanh"),
-                tf.keras.layers.Dense(600, activation="tanh"),
-                tf.keras.layers.Dropout(0.5), 
-                tf.keras.layers.Dense(200, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
-                tf.keras.layers.Dense(50, activation="tanh"),
+                tf.keras.layers.Dense(40, activation="tanh"),
+                tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
+                tf.keras.layers.Dense(20, activation="tanh"),
                 tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
-        
-        self.optimizer = optimizers.Adam()
+        lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+                                                                    initial_learning_rate=0.5e-2,
+                                                                    decay_steps=10000,
+                                                                    decay_rate=0.9
+                                                                    )
+        self.optimizer = optimizers.Adam(learning_rate = lr_schedule)
         model.compile(
-            loss="binary_crossentropy", optimizer=self.optimizer, metrics=["accuracy"]
-        )
+                      loss="binary_crossentropy", 
+                      optimizer=self.optimizer, 
+                      metrics=["accuracy"]
+                     )
+        
         self.fit = lambda X, y: self.model.fit(
-            X, y, epochs=self.epochs, batch_size=self.batchSize
-        )
+            X, y, epochs=self.epochs, batch_size=self.batchSize, callbacks=[self.callback]
+                            )
         self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
         self.model.summary()

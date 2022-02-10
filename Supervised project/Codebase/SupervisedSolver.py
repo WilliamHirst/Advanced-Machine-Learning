@@ -136,14 +136,7 @@ class SupervisedSolver:
 
 if __name__ == "__main__":
     import time
-
-    # Load data from npy storage. Must have run ReadFile.py first
-    rawFeatures_TR = np.load("../Data/rawFeatures_TR.npy")
-    rawTargets_TR = np.load("../Data/rawTargets_TR.npy")
-    # featuresTest = np.load("../Data/featuresTest.npy")
-
    
-
     # Place tensors on the CPU
     # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
@@ -167,18 +160,18 @@ if __name__ == "__main__":
     SS = SupervisedSolver(X_train, y_train)
 
 
-    # with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
+    with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
 
-    SS.getModel("neuralNetwork", epochs=5, batchSize=10000, depth=3)
-    SS.train()
-    SS.plotAccuracy()
-    SS.plotLoss()
+        SS.getModel("neuralNetwork", epochs=1000, batchSize=4000, depth=3)
+        SS.train()
+        SS.plotAccuracy()
+        SS.plotLoss()
 
-    SS.predict(X_test, y_test)
+        SS.predict(X_test, y_test)
 
-    t1 = time.time()
-    total_n = t1 - t0
-    print("{:.2f}s".format(total_n))
+        t1 = time.time()
+        total_n = t1 - t0
+        print("{:.2f}s".format(total_n))
     # SS.plotModel()
 
     # pip install pywhatkit
