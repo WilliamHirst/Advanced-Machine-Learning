@@ -143,14 +143,13 @@ if __name__ == "__main__":
     # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
+    #DH.removeBadFeatures(50)
     DH.fillWithImputer()
-    DH.standardScale()
+    #DH.standardScale()
+    #DH.removeOutliers(6)
     DH.split()
     
-    #DH.removeBadFeatures(30)
     
-    
-    #DH.removeOutliers(4)
     
 
     X_train, X_val, y_train, y_val = DH(include_test = True)
@@ -164,10 +163,8 @@ if __name__ == "__main__":
 
     with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("convNeuralNetwork", epochs=1000, batchSize=4000, depth=6)
+        SS.getModel("xGBoost", epochs=1000, batchSize=4000, depth=6)
         SS.train()
-        
-        
 
         SS.predict(X_val, y_val)
 
@@ -177,7 +174,7 @@ if __name__ == "__main__":
     # SS.plotModel()
 
     # pip install pywhatkit
-    if SS.acc >= 85:
+    if SS.acc >= 84.4:
         import pywhatkit
 
         songOrArtist = "celebration"
