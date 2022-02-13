@@ -10,16 +10,16 @@ particle collision data from CERN on their master degrees.
 
 
 
-Links used as inspiration: \n
-https://arxiv.org/pdf/1510.02674.pdf \n
-https://colab.research.google.com/drive/1mWiik2pZVlxhU5fHXc9c3IcJVsVwj8mx?usp=sharing \n
-https://www.deeplearningbook.org/contents/generative_models.html \n
-https://www.deeplearningbook.org/contents/graphical_models.html \n
-https://www.deeplearningbook.org/contents/mlp.html \n
-https://www.deeplearningbook.org/contents/autoencoders.html \n
-https://arxiv.org/pdf/2112.02309.pdf \n
-https://arxiv.org/pdf/2110.13041.pdf \n
-https://www.youtube.com/watch?v=9zKuYvjFFS8 \n
-https://www.youtube.com/watch?v=uaaqyVS9-rM \n
-https://towardsdatascience.com/support-vector-machine-introduction-to-machine-learning-algorithms-934a444fca47 \n
-https://github.com/enriqueb721/A-Deep-Learning-Approach-for-Higgs-Boson-Machine-Learning-Challenge/blob/master/Code.ipynb \n
+Links used as inspiration: <br /> 
+https://arxiv.org/pdf/1510.02674.pdf <br /> 
+https://colab.research.google.com/drive/1mWiik2pZVlxhU5fHXc9c3IcJVsVwj8mx?usp=sharing <br /> 
+https://www.deeplearningbook.org/contents/generative_models.html <br /> 
+https://www.deeplearningbook.org/contents/graphical_models.html <br /> 
+https://www.deeplearningbook.org/contents/mlp.html <br /> 
+https://www.deeplearningbook.org/contents/autoencoders.html <br /> 
+https://arxiv.org/pdf/2112.02309.pdf <br /> 
+https://arxiv.org/pdf/2110.13041.pdf <br /> 
+https://www.youtube.com/watch?v=9zKuYvjFFS8 <br /> 
+https://www.youtube.com/watch?v=uaaqyVS9-rM <br /> 
+https://towardsdatascience.com/support-vector-machine-introduction-to-machine-learning-algorithms-934a444fca47 <br /> 
+https://github.com/enriqueb721/A-Deep-Learning-Approach-for-Higgs-Boson-Machine-Learning-Challenge/blob/master/Code.ipynb <br /> 
