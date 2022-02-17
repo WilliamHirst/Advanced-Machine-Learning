@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("neuralNetwork", epochs=5, batchSize=4000, depth=6)
+        SS.getModel("neuralNetwork", epochs=30, batchSize=4000, depth=6)
         SS.train()
 
         SS.predict(X_val, y_val)
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     # SS.plotModel()
 
     # pip install pywhatkit
-    if SS.acc >= 84.4:
+    if SS.acc >= 80:
         import pywhatkit
 
         songOrArtist = "celebration"
