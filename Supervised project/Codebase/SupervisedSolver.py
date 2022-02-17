@@ -161,9 +161,9 @@ if __name__ == "__main__":
     SS = SupervisedSolver(X_train, y_train, X_val, y_val)
 
 
-    with tf.device("/GPU:0"):  # Write '/GPU:0' for large networks
+    with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("xGBoost", epochs=1000, batchSize=4000, depth=6)
+        SS.getModel("neuralNetwork", epochs=5, batchSize=4000, depth=6)
         SS.train()
 
         SS.predict(X_val, y_val)
