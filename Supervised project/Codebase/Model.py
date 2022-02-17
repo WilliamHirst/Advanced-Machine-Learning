@@ -47,7 +47,7 @@ class Model(SupervisedSolver):
                     input_shape=(self.nrFeatures,),
                 ),
                 tf.keras.layers.Dropout(0.5),
-                tf.keras.layers.Dense(40, activation="tanh"),
+                tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
                 tf.keras.layers.Dense(20, activation="tanh"),
                 tf.keras.layers.Dense(1, activation="sigmoid"),
