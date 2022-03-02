@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-    #DH.removeBadFeatures(50)
+    #DH.removeBadFeatures(40)
     DH.fillWithImputer()
     #DH.standardScale()
     #DH.removeOutliers(6)
