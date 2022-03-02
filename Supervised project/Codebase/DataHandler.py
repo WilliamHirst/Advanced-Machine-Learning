@@ -109,5 +109,10 @@ class DataHandler:
         Kmean = KMeans(n_clusters=2)
         Kmean.fit(self.X_train)    
         label_likelyhood = Kmean.labels_
-
+        print(Kmean.score(self.X_train))
+        self.acc = (
+            np.sum(np.equal(label_likelyhood, self.y_train)) / len(self.y_train) * 100
+        )
+        print(f"Accuracy: {self.acc:.1f}%")
         
+        np.append(self.X_train, label_likelyhood.reshape(len(label_likelyhood), 1), axis=1)

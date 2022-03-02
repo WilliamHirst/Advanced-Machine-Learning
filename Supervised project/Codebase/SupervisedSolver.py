@@ -138,19 +138,21 @@ class SupervisedSolver:
 
 if __name__ == "__main__":
     import time
-   
-    # Place tensors on the CPU
-    # with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-    t0 = time.time()
-    DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
+    
+    # Place tensors on the CPUprint(np.where(label_likelyhood != 0)[0], len(np.where(label_likelyhood != 0)[0]))
+    t0 = time.time()    
+    DH = DataHandler("rawFeatures_TR.npy" ,"rawTargets_TR.npy")
     #DH.removeBadFeatures(40)
     DH.fillWithImputer()
-    #DH.standardScale()
+    DH.standardScale()
     #DH.removeOutliers(6)
+    DH.kMeansClustering()
     DH.split()
     
-    DH.kMeansClustering()
-    exit()
+    
+    
+
+    input("Continue? ")
     
 
     X_train, X_val, y_train, y_val = DH(include_test = True)
@@ -163,7 +165,7 @@ if __name__ == "__main__":
 
 
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-
+        
         SS.getModel("neuralNetwork", epochs=28, batchSize=4000, depth=6)
         SS.train()
 
@@ -172,6 +174,7 @@ if __name__ == "__main__":
         t1 = time.time()
         total_n = t1 - t0
         print("{:.2f}s".format(total_n))
+
     # SS.plotModel()
 
     # pip install pywhatkit
