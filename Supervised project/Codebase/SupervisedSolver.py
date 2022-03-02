@@ -149,7 +149,8 @@ if __name__ == "__main__":
     #DH.removeOutliers(6)
     DH.split()
     
-    
+    DH.kMeansClustering()
+    exit()
     
 
     X_train, X_val, y_train, y_val = DH(include_test = True)

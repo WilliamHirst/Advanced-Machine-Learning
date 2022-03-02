@@ -52,7 +52,6 @@ class DataHandler:
         arr = self.nanToMean(self.X_train)
         std = np.nanstd(arr, axis=0)
         mean = np.nanmean(arr, axis=0)
-        indx = 1
         check = np.abs(arr - mean)
         isLess = np.less_equal(check, sigma * std)
         
@@ -105,5 +104,10 @@ class DataHandler:
         np.save(f"../Data/{targetName}", self.y_train)
         print(f"New dataset saved as {featureName} and {targetName} in folder: Data")
 
-        
+    def kMeansClustering(self):
+        from sklearn.cluster import KMeans
+        Kmean = KMeans(n_clusters=2)
+        Kmean.fit(self.X_train)    
+        label_likelyhood = Kmean.labels_
+
         
