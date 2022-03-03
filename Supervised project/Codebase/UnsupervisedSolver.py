@@ -23,3 +23,10 @@ class UnsupervisedSolver:
         self.fit = m.fit
         self.model_predict = m.predict
         self.model = m()
+
+    
+    def train(self):
+        self.trainModel = self.fit(self.X_train, self.y_train, self.X_val, self.y_val)
+        
+    def predict(self, X_all):
+        pass
