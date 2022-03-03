@@ -185,3 +185,12 @@ class Model(SupervisedSolver):
         self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)]) 
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 
+    def supportVectorMachines(self):
+
+        pass 
+
+    def variationalAutoEncoders(self):
+
+
+        pass
+
