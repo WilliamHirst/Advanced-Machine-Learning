@@ -116,3 +116,12 @@ class DataHandler:
         print(f"Accuracy: {self.acc:.1f}%")
         
         np.append(self.X_train, label_likelyhood.reshape(len(label_likelyhood), 1), axis=1)
+
+    def AE_prep(self):
+        X_all = self.X_train.copy()
+        y_all = self.y_train.copy()
+
+        index_background = np.where(y_all == 0)[0]
+        X_background = X_all[index_background, :]
+
+        return X_background, X_all, y_all

@@ -53,7 +53,7 @@ class SupervisedSolver:
         print(
             "Number of wrong classified: {} \nNumber of missed events: {}".format(
                 self.number_wrong_prediction, self.number_missed
-             )
+            )
         )
 
     """
@@ -116,12 +116,6 @@ class SupervisedSolver:
         plt.legend(["train", "test"], loc="upper left")
         plt.show()
 
-
-
-
-
-    
-
     def callModelSave(self):
         state = True
         while state == True:
@@ -138,24 +132,20 @@ class SupervisedSolver:
 
 if __name__ == "__main__":
     import time
-    
+
     # Place tensors on the CPUprint(np.where(label_likelyhood != 0)[0], len(np.where(label_likelyhood != 0)[0]))
-    t0 = time.time()    
-    DH = DataHandler("rawFeatures_TR.npy" ,"rawTargets_TR.npy")
-    #DH.removeBadFeatures(40)
+    t0 = time.time()
+    DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
+    # DH.removeBadFeatures(40)
     DH.fillWithImputer()
     DH.standardScale()
-    #DH.removeOutliers(6)
+    # DH.removeOutliers(6)
     DH.kMeansClustering()
     DH.split()
-    
-    
-    
 
     input("Continue? ")
-    
 
-    X_train, X_val, y_train, y_val = DH(include_test = True)
+    X_train, X_val, y_train, y_val = DH(include_test=True)
 
     """
     Model types: neuralNetwork -- convNeuralNetwork -- GRU_NN -- decisionTree -- xGBoost 
@@ -163,9 +153,8 @@ if __name__ == "__main__":
 
     SS = SupervisedSolver(X_train, y_train, X_val, y_val)
 
-
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
-        
+
         SS.getModel("neuralNetwork", epochs=28, batchSize=4000, depth=6)
         SS.train()
 
@@ -189,4 +178,3 @@ if __name__ == "__main__":
         SS.plotAccuracy()
         SS.plotLoss()
         SS.callModelSave()
-
