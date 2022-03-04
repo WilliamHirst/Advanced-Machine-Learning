@@ -197,43 +197,29 @@ class Model(SupervisedSolver):
         pass
 
     def autoEncoders(self):
-        autoencoder = AnomalyDetector()
-        autoencoder.compile(optimizer="adam", loss="mae")
-
-        self.fit = lambda X_train, X_all: self.model.fit(
-            X_train,
-            X_train,
-            epochs=20,
-            batch_size=512,
-            validation_data=(X_all, X_all),
-            shuffle=True,
-        )
-
-        self.predict = lambda X: np.around(
-            self.model.decoder(self.model.encoder(X)).numpy()
-        )
-        self.model = autoencoder
-
-
-class AnomalyDetector(Model):
-    def __init__(self):
-        super(AnomalyDetector, self).__init__()
-        self.encoder = tf.keras.Sequential(
+        model = tf.keras.Sequential(
             [
                 tf.keras.layers.Dense(
-                    32,
-                    activation="relu",
-                    input_shape=(self.nrFeatures,),
+                    32, activation="relu", input_shape=(self.nrFeatures,)
                 ),
                 tf.keras.layers.Dense(16, activation="relu"),
                 tf.keras.layers.Dense(8, activation="relu"),
-            ]
-        )
-
-        self.decoder = tf.keras.Sequential(
-            [
                 tf.keras.layers.Dense(16, activation="relu"),
                 tf.keras.layers.Dense(32, activation="relu"),
                 tf.keras.layers.Dense(140, activation="sigmoid"),
             ]
         )
+
+        self.optimizer = optimizers.Adam()
+        model.compile(loss ="mae",optimizer=self.optimizer, metrics=["accuracy"])
+
+        self.fit = lambda X_train: self.model.fit(
+            X_train,
+            X_train,
+            epochs=20,
+            batch_size=512,
+            shuffle=True,
+        )  # validation_data=(X_all, X_all),
+
+        self.predict = lambda X: np.around(model(X).numpy().ravel())
+        self.model = model
