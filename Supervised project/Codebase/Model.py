@@ -171,6 +171,11 @@ class Model(SupervisedSolver):
 
     def xGBoost(self):
         #Prefers max_depth = 5
+        #n_estimators = 100
+        #max_depth = 5
+        #min_samples_leaf = 200
+        #max_features = 10
+        #earning_rate = 0.5
        
 
         self.model = xgb.XGBClassifier(max_depth=self.depth,
