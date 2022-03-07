@@ -105,7 +105,6 @@ class Model(SupervisedSolver):
                 tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
-
         model.compile(
             loss="binary_crossentropy",
             optimizer=optimizers.Adam(),
@@ -181,7 +180,8 @@ class Model(SupervisedSolver):
         #min_samples_leaf = 200
         #max_features = 10
         #earning_rate = 0.5
-       
+
+        """
         self.model = xgb.XGBClassifier(max_depth=self.depth,
                                        use_label_encoder=False,
                                        objective = "binary:logistic",
@@ -190,6 +190,20 @@ class Model(SupervisedSolver):
                                        tree_method = "hist",
                                        eta = 0.1,
                                        )
+        """
+
+        self.model = xgb.XGBClassifier(max_depth=self.depth,
+                                       use_label_encoder=False,
+                                       num_round = 10,
+                                       objective = "binary:logistic",
+                                       n_estimators=10000,
+                                       min_samples_leaf = 200,
+                                       eval_metric = "error",
+                                       max_features = 10,
+                                       tree_method = "hist",
+                                       eta = .1
+                              
+                                       )                               
         self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)]) 
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 

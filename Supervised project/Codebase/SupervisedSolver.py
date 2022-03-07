@@ -137,13 +137,12 @@ if __name__ == "__main__":
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     # DH.removeBadFeatures(40)
-    DH.fillWithImputer()
-    DH.standardScale()
+    #DH.fillWithImputer()
+    #DH.standardScale()
     # DH.removeOutliers(6)
-    DH.kMeansClustering()
+    #DH.kMeansClustering()
     DH.split()
 
-    input("Continue? ")
 
     X_train, X_val, y_train, y_val = DH(include_test=True)
 
@@ -155,7 +154,7 @@ if __name__ == "__main__":
 
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("neuralNetwork", epochs=28, batchSize=4000, depth=6)
+        SS.getModel("xGBoost", epochs=28, batchSize=4000, depth=2)
         SS.train()
 
         SS.predict(X_val, y_val)
