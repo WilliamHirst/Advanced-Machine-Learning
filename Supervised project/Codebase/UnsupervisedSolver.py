@@ -25,25 +25,42 @@ class UnsupervisedSolver:
         self.model = m()
 
     def train(self):
-        self.trainModel = self.fit(self.X_train)
+        self.trainModel = self.fit(self.X_train, y_train)
 
     def predict(self, X_all):
         prediction = self.model_predict(X_all)
-        print(prediction)
+        print(prediction, np.shape(prediction))
 
 
 if __name__ == "__main__":
+    import time 
 
+    t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     # DH.removeBadFeatures(40)
     DH.fillWithImputer()
     DH.standardScale()
-    X_background, X_all, y_all = DH.AE_prep()
+    #X_background, X_all, y_all = DH.AE_prep()
     # DH.removeOutliers(6)
     # DH.kMeansClustering()
-    # DH.split()
+    DH.split()
 
-    US = UnsupervisedSolver(X_background, X_background, X_all, y_all)
-    US.getModel("autoencoder")
+    X_train, X_val, y_train, y_val = DH(include_test=True)
+    print(y_val, np.shape(y_val))
+
+    US = UnsupervisedSolver(X_train, y_train, X_val, y_val)
+    US.getModel("svm")
     US.train()
-    US.predict(X_all)
+
+    predict = US.predict(X_val)
+
+    
+
+    t1 = time.time()
+    total_n = t1 - t0
+    print("{:.2f}s".format(total_n))
+
+    acc = (
+            np.sum(np.equal(predict, y_val.ravel())) / len(y_val) * 100
+        )
+    print(f"Accuracy: {acc:.1f}%")

@@ -16,7 +16,7 @@ class Model(SupervisedSolver):
             "decisionTree": [self.decision_tree, "sklearn"],
             "xGBoost": [self.xGBoost, "sklearn"],
             "autoencoder": [self.autoEncoders, "tf"],
-            "svm": [self.xGBoost, "tf"],
+            "svm": [self.supportVectorMachines, "tf"],
         }
         self.nrFeatures = nrFeatures
         self.initMethod, self.tool = methods[method]
@@ -208,8 +208,14 @@ class Model(SupervisedSolver):
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 
     def supportVectorMachines(self):
+        from sklearn import svm
 
-        pass
+        classifier = svm.SVC(kernel="rbf",)
+        self.fit = lambda X_train, y_train: self.model.fit(X_train, y_train)
+
+        self.predict = lambda X: self.model.predict(X)
+
+        self.model = classifier
 
     def autoEncoders(self):
         model = tf.keras.Sequential(
