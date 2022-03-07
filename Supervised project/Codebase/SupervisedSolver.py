@@ -6,6 +6,7 @@ from tensorflow.keras import optimizers  # If we need regularizers
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import xgboost as xgb
+from Functions import timer
 
 
 class SupervisedSolver:
@@ -131,10 +132,9 @@ class SupervisedSolver:
 
 
 if __name__ == "__main__":
-    import time
 
     # Place tensors on the CPUprint(np.where(label_likelyhood != 0)[0], len(np.where(label_likelyhood != 0)[0]))
-    t0 = time.time()
+    tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     # DH.removeBadFeatures(40)
     #DH.fillWithImputer()
@@ -151,22 +151,19 @@ if __name__ == "__main__":
     """
 
     SS = SupervisedSolver(X_train, y_train, X_val, y_val)
-
+    start_time = timer(None)
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("xGBoost", epochs=28, batchSize=4000, depth=2)
+        SS.getModel("xGBoost", epochs=28, batchSize=4000, depth=6)
         SS.train()
-
         SS.predict(X_val, y_val)
 
-        t1 = time.time()
-        total_n = t1 - t0
-        print("{:.2f}s".format(total_n))
+        timer(start_time)
 
     # SS.plotModel()
 
     # pip install pywhatkit
-    if SS.acc >= 84.4:
+    if SS.acc >= 84.5:
         import pywhatkit
 
         songOrArtist = "celebration"

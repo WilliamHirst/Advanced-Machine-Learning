@@ -65,7 +65,7 @@ class DataHandler:
         from sklearn.model_selection import train_test_split
 
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-        self.X_train, self.y_train, test_size=t_size)
+        self.X_train, self.y_train, test_size=t_size, random_state = 0)
     
     def setNanToMean(self):
         """

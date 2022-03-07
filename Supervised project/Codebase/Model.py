@@ -174,36 +174,31 @@ class Model(SupervisedSolver):
         self.model = model
 
     def xGBoost(self):
-        #Prefers max_depth = 5
-        #n_estimators = 100
-        #max_depth = 5
-        #min_samples_leaf = 200
-        #max_features = 10
-        #earning_rate = 0.5
-
+        #Prefers max_depth = 6
         """
+        use_label_encoder=False,
+        objective = "binary:logistic",
+        n_estimators=250,
+        eval_metric = "error",
+        tree_method = "hist",
+        max_features = 10,
+        eta = 0.1,
+        nthread=1,
+        subsample = 0.7
+        """                               
         self.model = xgb.XGBClassifier(max_depth=self.depth,
-                                       use_label_encoder=False,
-                                       objective = "binary:logistic",
-                                       n_estimators=800,
-                                       eval_metric = "error",
-                                       tree_method = "hist",
-                                       eta = 0.1,
-                                       )
-        """
-
-        self.model = xgb.XGBClassifier(max_depth=self.depth,
-                                       use_label_encoder=False,
-                                       num_round = 10,
-                                       objective = "binary:logistic",
-                                       n_estimators=10000,
-                                       min_samples_leaf = 200,
-                                       eval_metric = "error",
-                                       max_features = 10,
-                                       tree_method = "hist",
-                                       eta = .1
-                              
-                                       )                               
+                                    use_label_encoder=False,
+                                    objective = "binary:logistic",
+                                    n_estimators=500,
+                                    eval_metric = "error",
+                                    tree_method = "hist",
+                                    max_features = 15,
+                                    eta = 0.1,
+                                    nthread=1,
+                                    subsample = 0.9,
+                                    gamma = 0.1,
+                                    )           
+                                                 
         self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)]) 
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 
