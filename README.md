@@ -23,3 +23,4 @@ https://www.youtube.com/watch?v=9zKuYvjFFS8 <br />
 https://www.youtube.com/watch?v=uaaqyVS9-rM <br /> 
 https://towardsdatascience.com/support-vector-machine-introduction-to-machine-learning-algorithms-934a444fca47 <br /> 
 https://github.com/enriqueb721/A-Deep-Learning-Approach-for-Higgs-Boson-Machine-Learning-Challenge/blob/master/Code.ipynb <br /> 
+http://cds.cern.ch/record/1632191/files/ATLAS-CONF-2013-108.pdf <br /> 
