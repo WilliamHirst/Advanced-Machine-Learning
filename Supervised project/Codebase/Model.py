@@ -70,10 +70,10 @@ class Model(SupervisedSolver):
         self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(
             X_train,
             y_train,
-            validation_data=(X_val, y_val),
             epochs=self.epochs,
             batch_size=self.batchSize,
             callbacks=[self.callback],
+            validation_split=0.2
         )
         self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
@@ -197,8 +197,7 @@ class Model(SupervisedSolver):
                                     nthread=1,
                                     subsample = 0.9,
                                     gamma = 0.1,
-                                    )           
-                                                 
+                                    )                                 
         self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)]) 
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 

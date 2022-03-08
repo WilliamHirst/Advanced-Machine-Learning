@@ -10,7 +10,7 @@ from Functions import timer
 
 
 class SupervisedSolver:
-    def __init__(self, X_train, y_train, X_val, y_val):
+    def __init__(self, X_train, y_train, X_val = None, y_val= None):
         self.X_train = X_train
         self.y_train = y_train
         self.X_val = X_val
@@ -136,31 +136,34 @@ if __name__ == "__main__":
     # Place tensors on the CPUprint(np.where(label_likelyhood != 0)[0], len(np.where(label_likelyhood != 0)[0]))
     tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-    # DH.removeBadFeatures(40)
-    #DH.fillWithImputer()
-    #DH.standardScale()
+    #DH.removeBadFeatures(40)
+    DH.fillWithImputer()
+    DH.standardScale()
     # DH.removeOutliers(6)
     #DH.kMeansClustering()
-    DH.split()
+    #DH.split()
 
 
-    X_train, X_val, y_train, y_val = DH(include_test=True)
+    X_train, y_train = DH(include_test=False)
 
     """
     Model types: neuralNetwork -- convNeuralNetwork -- GRU_NN -- decisionTree -- xGBoost 
     """
 
-    SS = SupervisedSolver(X_train, y_train, X_val, y_val)
+    SS = SupervisedSolver(X_train, y_train, X_train, y_train)
     start_time = timer(None)
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("xGBoost", epochs=28, batchSize=4000, depth=6)
+
+        SS.getModel("neuralNetwork", epochs=50, batchSize=4000, depth=6)
         SS.train()
-        SS.predict(X_val, y_val)
+        #SS.predict(X_val, y_val)
 
         timer(start_time)
+        SS.plotAccuracy()
 
-    # SS.plotModel()
+    #SS.plotModel()
+    exit()
 
     # pip install pywhatkit
     if SS.acc >= 84.5:
