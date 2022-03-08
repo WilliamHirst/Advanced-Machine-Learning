@@ -155,7 +155,7 @@ if __name__ == "__main__":
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
 
 
-        SS.getModel("neuralNetwork", epochs=50, batchSize=4000, depth=6)
+        SS.getModel("xGBoost", epochs=50, batchSize=4000, depth=6)
         SS.train()
         #SS.predict(X_val, y_val)
 

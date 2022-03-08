@@ -198,7 +198,7 @@ class Model(SupervisedSolver):
                                     subsample = 0.9,
                                     gamma = 0.1,
                                     )                                 
-        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)]) 
+        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, validation_split=0.2 )# eval_set=[(X_val, y_val)]) 
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 
     def supportVectorMachines(self):
