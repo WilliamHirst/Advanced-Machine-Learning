@@ -71,7 +71,7 @@ def gridNN():
 
     print(
         f"""
-    The hyperparameter search is complete. The optimal number nodes in first, second layer is {best_hps.get('num_of_neurons1')} and \
+    The hyperparameter search is complete. The optimal number nodes in start, first, second layer is {best_hps.get('num_of_neurons0')}, {best_hps.get('num_of_neurons1')} and \
     {best_hps.get('num_of_neurons2')} and third layer {best_hps.get('num_of_neurons3')} the optimal learning rate for the optimizer
     is {best_hps.get('learning_rate')}.
     """
@@ -94,7 +94,7 @@ def model_builder(hp):
     model = tf.keras.Sequential(
         [
             tf.keras.layers.Dense(
-                50,
+                units=hp.Int("num_of_neurons0", min_value=10, max_value=50, step=5),
                 activation=tf.keras.layers.LeakyReLU(alpha=0.01),
                 input_shape=(30,),
             ),

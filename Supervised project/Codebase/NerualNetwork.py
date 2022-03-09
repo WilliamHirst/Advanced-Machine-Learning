@@ -22,7 +22,7 @@ hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 
 # Train to find best epoch
 print("Training model.")
-history = hypermodel.fit(X, Y, epochs=50, batch_size=4000, validation_split=0.2)
+history = hypermodel.fit(X, Y, epochs=1000, batch_size=4000, validation_split=0.2)
 acc_hist = history.history["val_accuracy"]
 loss_hist = history.history["val_loss"]
 best_epoch = acc_hist.index(max(acc_hist))
