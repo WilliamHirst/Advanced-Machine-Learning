@@ -33,14 +33,14 @@ class UnsupervisedSolver:
 
 
 if __name__ == "__main__":
-    import time 
+    import time
 
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     # DH.removeBadFeatures(40)
     DH.fillWithImputer()
     DH.standardScale()
-    #X_background, X_all, y_all = DH.AE_prep()
+    # X_background, X_all, y_all = DH.AE_prep()
     # DH.removeOutliers(6)
     # DH.kMeansClustering()
     DH.split()
@@ -54,13 +54,9 @@ if __name__ == "__main__":
 
     predict = US.predict(X_val)
 
-    
-
     t1 = time.time()
     total_n = t1 - t0
     print("{:.2f}s".format(total_n))
 
-    acc = (
-            np.sum(np.equal(predict, y_val.ravel())) / len(y_val) * 100
-        )
+    acc = np.sum(np.equal(predict, y_val.ravel())) / len(y_val) * 100
     print(f"Accuracy: {acc:.1f}%")

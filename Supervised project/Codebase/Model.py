@@ -73,7 +73,7 @@ class Model(SupervisedSolver):
             epochs=self.epochs,
             batch_size=self.batchSize,
             callbacks=[self.callback],
-            validation_split=0.2
+            validation_split=0.2,
         )
         self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
@@ -174,7 +174,7 @@ class Model(SupervisedSolver):
         self.model = model
 
     def xGBoost(self):
-        #Prefers max_depth = 6
+        # Prefers max_depth = 6
         """
         use_label_encoder=False,
         objective = "binary:logistic",
@@ -185,26 +185,31 @@ class Model(SupervisedSolver):
         eta = 0.1,
         nthread=1,
         subsample = 0.7
-        """                               
-        self.model = xgb.XGBClassifier(max_depth=self.depth,
-                                    use_label_encoder=False,
-                                    objective = "binary:logistic",
-                                    n_estimators=500,
-                                    eval_metric = "error",
-                                    tree_method = "hist",
-                                    max_features = 15,
-                                    eta = 0.1,
-                                    nthread=1,
-                                    subsample = 0.9,
-                                    gamma = 0.1,
-                                    )                                 
-        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(X_train, y_train, validation_split=0.2 )# eval_set=[(X_val, y_val)]) 
+        """
+        self.model = xgb.XGBClassifier(
+            max_depth=self.depth,
+            use_label_encoder=False,
+            objective="binary:logistic",
+            n_estimators=500,
+            eval_metric="error",
+            tree_method="hist",
+            max_features=15,
+            eta=0.1,
+            nthread=1,
+            subsample=0.9,
+            gamma=0.1,
+        )
+        self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(
+            X_train, y_train, validation_split=0.2
+        )  # eval_set=[(X_val, y_val)])
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 
     def supportVectorMachines(self):
         from sklearn import svm
 
-        classifier = svm.SVC(kernel="rbf",)
+        classifier = svm.SVC(
+            kernel="rbf",
+        )
         self.fit = lambda X_train, y_train: self.model.fit(X_train, y_train)
 
         self.predict = lambda X: self.model.predict(X)
@@ -226,7 +231,7 @@ class Model(SupervisedSolver):
         )
 
         self.optimizer = optimizers.Adam()
-        model.compile(loss ="mae",optimizer=self.optimizer, metrics=["accuracy"])
+        model.compile(loss="mae", optimizer=self.optimizer, metrics=["accuracy"])
 
         self.fit = lambda X_train: self.model.fit(
             X_train,

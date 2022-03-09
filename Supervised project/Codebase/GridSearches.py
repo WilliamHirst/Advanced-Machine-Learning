@@ -10,64 +10,73 @@ from tensorflow.keras import optimizers
 import keras_tuner as kt
 
 
-
-
-
-
 DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-X,Y = DH(include_test=False)
+X, Y = DH(include_test=False)
 
 
-def gridXGBoost(folds = 5, param_comb = 5):
+def gridXGBoost(folds=5, param_comb=5):
     xgb = XGBClassifier(
-                        max_depth=6,
-                        use_label_encoder=False,
-                        objective = "binary:logistic",
-                        n_estimators=400,
-                        eval_metric = "error",
-                        tree_method = "hist",
-                        max_features = 20,
-                        eta = 0.1,
-                        nthread=1,
-                        subsample = 0.9,
-                        gamma = 0.1,
-                        verbosity = 0
-                            )    
+        max_depth=6,
+        use_label_encoder=False,
+        objective="binary:logistic",
+        n_estimators=400,
+        eval_metric="error",
+        tree_method="hist",
+        max_features=20,
+        eta=0.1,
+        nthread=1,
+        subsample=0.9,
+        gamma=0.1,
+        verbosity=0,
+    )
     params = {
-        'min_child_weight': [1,2,3,4,5,6,7,8,9,10],
-       
-        }  
-    skf = StratifiedKFold(n_splits=folds, shuffle = True, random_state = 1001)
-    random_search = RandomizedSearchCV(xgb, param_distributions=params, n_iter=param_comb, scoring='roc_auc', n_jobs=4, cv=skf.split(X,Y), verbose=3, random_state=1001 )
+        "min_child_weight": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    }
+    skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1001)
+    random_search = RandomizedSearchCV(
+        xgb,
+        param_distributions=params,
+        n_iter=param_comb,
+        scoring="roc_auc",
+        n_jobs=4,
+        cv=skf.split(X, Y),
+        verbose=3,
+        random_state=1001,
+    )
     random_search.fit(X, Y)
 
-    print('\n All results:')
+    print("\n All results:")
     print(random_search.cv_results_)
-    print('\n Best hyperparameters:')
+    print("\n Best hyperparameters:")
     print(random_search.best_params_)
+
 
 def gridNN():
     DH.fillWithImputer()
     DH.standardScale()
-    X,Y = DH(include_test=False)
-    
-    tuner = kt.Hyperband(model_builder,
-                     objective='val_accuracy',
-                     max_epochs=50,
-                     factor=3,
-                     directory='GridSearches',
-                     project_name='NN',
-                     overwrite = True)
+    X, Y = DH(include_test=False)
+
+    tuner = kt.Hyperband(
+        model_builder,
+        objective="val_accuracy",
+        max_epochs=50,
+        factor=3,
+        directory="GridSearches",
+        project_name="NN",
+        overwrite=True,
+    )
 
     tuner.search(X, Y, epochs=100, validation_split=0.2)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
-    print(f"""
-    The hyperparameter search is complete. The optimal number nodes in first and second layer is {best_hps.get('num_of_neurons1')} and \
-    {best_hps.get('num_of_neurons2')} the optimal learning rate for the optimizer
+    print(
+        f"""
+    The hyperparameter search is complete. The optimal number nodes in first, second layer is {best_hps.get('num_of_neurons1')} and \
+    {best_hps.get('num_of_neurons2')} and third layer {best_hps.get('num_of_neurons3')} the optimal learning rate for the optimizer
     is {best_hps.get('learning_rate')}.
-    """)
-    
+    """
+    )
+
     state = True
     while state == True:
         answ = input("Do you want to save model? (y/n) ")
@@ -80,37 +89,39 @@ def gridNN():
             state = False
             print("Model not saved")
 
+
 def model_builder(hp):
     model = tf.keras.Sequential(
-            [
-                tf.keras.layers.Dense(
-                    50,
-                    activation=tf.keras.layers.LeakyReLU(alpha=0.01),
-                    input_shape=(30,),
-                ),
-                tf.keras.layers.Dropout(0.5),
-                tf.keras.layers.Dense(
-                    units=hp.Int('num_of_neurons1', min_value=10, max_value=50, step=5),
-                    activation=tf.keras.layers.LeakyReLU(alpha=0.01)
-                ),
-                tf.keras.layers.Dense(
-                    units=hp.Int('num_of_neurons2', min_value=10, max_value=50, step=5), 
-                    activation=tf.keras.layers.LeakyReLU(alpha=0.01)
-                ),
-                tf.keras.layers.Dense(units=10, activation="tanh"),
-                tf.keras.layers.Dense(1, activation="sigmoid"),
-            ]
-        )
-    hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 5e-3, 1e-3]) 
-    optimizer = optimizers.Adam(learning_rate=hp_learning_rate)
-    model.compile(
-        loss="binary_crossentropy", optimizer= optimizer, metrics=["accuracy"]
+        [
+            tf.keras.layers.Dense(
+                50,
+                activation=tf.keras.layers.LeakyReLU(alpha=0.01),
+                input_shape=(30,),
+            ),
+            tf.keras.layers.Dropout(0.1),
+            tf.keras.layers.Dense(
+                units=hp.Int("num_of_neurons1", min_value=10, max_value=50, step=5),
+                activation=tf.keras.layers.LeakyReLU(alpha=0.01),
+            ),
+            tf.keras.layers.Dense(
+                units=hp.Int("num_of_neurons2", min_value=10, max_value=50, step=5),
+                activation=tf.keras.layers.LeakyReLU(alpha=0.01),
+            ),
+            tf.keras.layers.Dense(
+                units=hp.Int("num_of_neurons3", min_value=10, max_value=50, step=5),
+                activation=tf.keras.layers.LeakyReLU(alpha=0.01),
+            ),
+            tf.keras.layers.Dense(1, activation="sigmoid"),
+        ]
     )
+    hp_learning_rate = hp.Choice("learning_rate", values=[9e-2, 9.5e-2, 1e-3, 1.5e-3])
+    optimizer = optimizers.Adam(learning_rate=hp_learning_rate)
+
+    model.compile(loss="binary_crossentropy", optimizer=optimizer, metrics=["accuracy"])
     return model
 
 
-gridNN()
+with tf.device("/CPU:0"):
+    gridNN()
 
-#gridXGBoost()
-
-
+# gridXGBoost()
