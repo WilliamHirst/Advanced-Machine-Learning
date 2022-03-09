@@ -205,14 +205,17 @@ class Model(SupervisedSolver):
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 
     def supportVectorMachines(self):
-        from sklearn import svm
+        from sklearn.svm import OneClassSVM
+        from sklearn import linear_model
 
-        classifier = svm.SVC(
-            kernel="rbf",
-        )
-        self.fit = lambda X_train, y_train: self.model.fit(X_train, y_train)
 
-        self.predict = lambda X: self.model.predict(X)
+
+        classifier = OneClassSVM(nu=0.1, kernel="rbf", gamma='auto') #linear_model.SGDOneClassSVM()
+
+
+        self.fit = lambda X_train: self.model.fit(X_train)
+
+        self.predict = lambda X: np.around(self.model.predict(X))
 
         self.model = classifier
 
@@ -226,7 +229,7 @@ class Model(SupervisedSolver):
                 tf.keras.layers.Dense(8, activation="relu"),
                 tf.keras.layers.Dense(16, activation="relu"),
                 tf.keras.layers.Dense(32, activation="relu"),
-                tf.keras.layers.Dense(140, activation="sigmoid"),
+                tf.keras.layers.Dense(1, activation="sigmoid"),
             ]
         )
 
