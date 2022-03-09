@@ -144,10 +144,10 @@ if __name__ == "__main__":
     column_names = np.load("../Data/column_names.npy")
 
     data_obj = Dataset(featuresTrain, targetsTrain, column_names)
-    #data_obj.featurePlot()
+    
+    data_obj.featurePlot()
     data_obj.correlationPlot()
-    #data_obj.barPlot()
-    exit()
+    data_obj.barPlot()
     data_obj.plotManyFeature(np.array([0,1,2,4,6,10,14,17,19]))
     data_obj.plotManyBoxes(np.array([0,1,2,20,21,10,14,17,19]))
 

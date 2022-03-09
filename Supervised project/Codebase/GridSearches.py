@@ -9,6 +9,8 @@ from DataHandler import DataHandler
 from tensorflow.keras import optimizers
 import keras_tuner as kt
 from sklearn.model_selection import PredefinedSplit
+from Functions import timer
+
 
 
 
@@ -17,6 +19,10 @@ X, Y = DH(include_test=False)
 
 
 def gridXGBoost():
+    import joblib
+    from joblib import dump, load
+    import os
+    start_time = timer(None)
     DH.split()
     X_train, X_val, y_train, y_val = DH(include_test=True)
     split_index = [-1]*len(X_train) + [0]*len(X_val)
@@ -38,21 +44,20 @@ def gridXGBoost():
                 "n_estimator": [50,100,200,300,400,500],
                 "max_dept": [1,2,3,4,5,6],
                 "eta": [1e-1,5e-2,1e-2,5e-3]
-                } 
+    } 
                 
     pds = PredefinedSplit(test_fold = split_index)
 
-
-    GridSearch = GridSearchCV(
-        xgb,
-        param_grid=params,
-        scoring="roc_auc",
-        cv=pds,
-        verbose=3)
-
+    GridSearch = GridSearchCV(xgb,
+                              param_grid=params,
+                              scoring="roc_auc",
+                              cv=pds,
+                              verbose=3)              
     GridSearch.fit(X, y)
+    timer(start_time)
     best_model = GridSearch.best_estimator_
     best_score = np.sum(np.where(best_model.predict(X_val) == y_val, 1, 0))/len(X_val)
+    
     print("\n Best score:")
     print(best_score)
 
@@ -60,12 +65,27 @@ def gridXGBoost():
     for param, value in best_model.get_params(deep=True).items():
         print(f"{param} -> {value}")
 
+    state = True
+    while state == True:
+        answ = input("Do you want to save model? (y/n) ")
+        if answ == "y":
+            name = input("name: ")
+            dirname = os.getcwd()
+            filename = os.path.join(dirname, f"sklearn_models/model_{name}.joblib")
+            print(filename)
+            dump(best_model, filename) 
+            state = False
+            print("Model saved")
+        elif answ == "n":
+            state = False
+            print("Model not saved")
+
 
 def gridNN():
     DH.fillWithImputer()
     DH.standardScale()
     X, Y = DH(include_test=False)
-
+    start_time = timer(None)
     tuner = kt.Hyperband(
         model_builder,
         objective="val_accuracy",
@@ -77,6 +97,7 @@ def gridNN():
     )
 
     tuner.search(X, Y, epochs=100, validation_split=0.2)
+    timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
     print(
