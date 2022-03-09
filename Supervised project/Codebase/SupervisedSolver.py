@@ -137,8 +137,8 @@ if __name__ == "__main__":
     tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     # DH.removeBadFeatures(40)
-    DH.fillWithImputer()
-    DH.standardScale()
+    #DH.fillWithImputer()
+    #DH.standardScale()
     # DH.removeOutliers(6)
     # DH.kMeansClustering()
     # DH.split()
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     start_time = timer(None)
     with tf.device("/CPU:0"):  # Write '/GPU:0' for large networks
 
-        SS.getModel("xGBoost", epochs=50, batchSize=4000, depth=6)
+        SS.getModel("xGBoost", epochs=50, batchSize=4000, depth=1)
         SS.train()
         # SS.predict(X_val, y_val)
 

@@ -190,7 +190,7 @@ class Model(SupervisedSolver):
             max_depth=self.depth,
             use_label_encoder=False,
             objective="binary:logistic",
-            n_estimators=500,
+            n_estimators=50,
             eval_metric="error",
             tree_method="hist",
             max_features=15,
@@ -200,8 +200,8 @@ class Model(SupervisedSolver):
             gamma=0.1,
         )
         self.fit = lambda X_train, y_train, X_val, y_val: self.model.fit(
-            X_train, y_train, validation_split=0.2
-        )  # eval_set=[(X_val, y_val)])
+            X_train, y_train,
+            eval_set=[(X_val, y_val)])
         self.predict = lambda X: np.around(self.model.predict(X).ravel())
 
     def supportVectorMachines(self):
