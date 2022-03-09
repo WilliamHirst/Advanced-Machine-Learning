@@ -8,47 +8,57 @@ from xgboost import XGBClassifier
 from DataHandler import DataHandler
 from tensorflow.keras import optimizers
 import keras_tuner as kt
+from sklearn.model_selection import PredefinedSplit
+
 
 
 DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 X, Y = DH(include_test=False)
 
 
-def gridXGBoost(folds=5, param_comb=5):
+def gridXGBoost():
+    DH.split()
+    X_train, X_val, y_train, y_val = DH(include_test=True)
+    split_index = [-1]*len(X_train) + [0]*len(X_val)
+    X = np.concatenate((X_train, X_val), axis=0)
+    y = np.concatenate((y_train, y_val), axis=0)    
+
     xgb = XGBClassifier(
-        max_depth=6,
         use_label_encoder=False,
         objective="binary:logistic",
-        n_estimators=400,
         eval_metric="error",
         tree_method="hist",
         max_features=20,
-        eta=0.1,
         nthread=1,
         subsample=0.9,
         gamma=0.1,
         verbosity=0,
     )
     params = {
-        "min_child_weight": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-    }
-    skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1001)
-    random_search = RandomizedSearchCV(
-        xgb,
-        param_distributions=params,
-        n_iter=param_comb,
-        scoring="roc_auc",
-        n_jobs=4,
-        cv=skf.split(X, Y),
-        verbose=3,
-        random_state=1001,
-    )
-    random_search.fit(X, Y)
+                "n_estimator": [50,100,200,300,400,500],
+                "max_dept": [1,2,3,4,5,6],
+                "eta": [1e-1,5e-2,1e-2,5e-3]
+                } 
+                
+    pds = PredefinedSplit(test_fold = split_index)
 
-    print("\n All results:")
-    print(random_search.cv_results_)
+
+    GridSearch = GridSearchCV(
+        xgb,
+        param_grid=params,
+        scoring="roc_auc",
+        cv=pds,
+        verbose=3)
+
+    GridSearch.fit(X, y)
+    best_model = GridSearch.best_estimator_
+    best_score = np.sum(np.where(best_model.predict(X_val) == y_val, 1, 0))/len(X_val)
+    print("\n Best score:")
+    print(best_score)
+
     print("\n Best hyperparameters:")
-    print(random_search.best_params_)
+    for param, value in best_model.get_params(deep=True).items():
+        print(f"{param} -> {value}")
 
 
 def gridNN():
@@ -121,7 +131,7 @@ def model_builder(hp):
     return model
 
 
-with tf.device("/CPU:0"):
-    gridNN()
+"""with tf.device("/CPU:0"):
+    gridNN()"""
 
-# gridXGBoost()
+gridXGBoost()
