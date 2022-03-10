@@ -123,5 +123,6 @@ class DataHandler:
 
         index_background = np.where(y_all == 0)[0]
         X_background = X_all[index_background, :]
+        y_background = y_all[index_background]
 
-        return X_background, X_all, y_all
+        return X_background, y_background, X_all, y_all

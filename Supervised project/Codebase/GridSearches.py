@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, train_test_split
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 from xgboost import XGBClassifier
@@ -10,12 +10,10 @@ from tensorflow.keras import optimizers
 import keras_tuner as kt
 from sklearn.model_selection import PredefinedSplit
 from Functions import timer
+from Model import AutoEncoder
 
 
 
-
-DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-X, Y = DH(include_test=False)
 
 
 def gridXGBoost():
@@ -152,7 +150,90 @@ def model_builder(hp):
     return model
 
 
-"""with tf.device("/CPU:0"):
-    gridNN()"""
 
-gridXGBoost()
+def gridSVM():
+    import joblib
+    from joblib import dump, load
+    import os
+    from sklearn.svm import OneClassSVM
+    from sklearn import linear_model
+
+    DH.fillWithImputer()
+    DH.standardScale()
+
+    start_time = timer(None)
+    X_b, y_b, X_all, y_all = DH.AE_prep()
+
+
+    
+    params = {
+                "kernel": ["poly", "rbf"],
+                "nu": [0.01, 0.05, 0.1, 0.2, 0.3] ,
+                "max_iter": [1000, 10000, 50000] 
+    } 
+    best_kernel = "linear"
+    best_nu = 0.01
+    best_max_iter = 10
+    best_score = 0
+    for kernel in params["kernel"]:
+        for nu in params["nu"]:
+            for max_iter in params["max_iter"]:
+                print(f"Kernel: {kernel}, Nu: {nu}, Max_iter: {max_iter}")
+                svm = OneClassSVM(kernel = kernel, nu=nu, max_iter=max_iter)
+                svm.fit(X_b)
+                prediction = np.around(svm.predict(X_all))
+                predictin = np.where(prediction == -1, 1, 0)
+                score =  np.sum(np.equal(prediction, y_all)) / len(y_all) * 100
+                print(f"{score} %")
+                if score > best_score:
+                    best_score = score
+                    best_kernel = kernel
+                    best_nu = nu
+                    best_max_iter = max_iter
+    
+
+
+    
+    timer(start_time)
+    
+    
+    print("\n Best score:")
+    print(best_score)
+
+    print("\n Best hyperparameters: ")
+    print(f"Kernel: {kernel}, Nu: {nu}, Max_iter: {max_iter}")
+
+def gridautoencoder():
+    DH.fillWithImputer()
+    DH.standardScale()
+    DH.split()
+    X_train, X_val, y_train, y_val = DH(include_test=True)
+    
+    
+    start_time = timer(None)
+
+    model = AutoEncoder(output_units=.shape[1])
+    # configurations of model
+    model.compile(loss='msle', metrics=['mse'], optimizer='adam')
+
+    history = model.fit(
+        ,
+        ,
+        epochs=20,
+        batch_size=512,
+        validation_data=(, )
+    )
+
+
+
+
+if __name__ == "__main__":
+    DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
+    X, Y = DH(include_test=False)
+    
+
+    """with tf.device("/CPU:0"):
+        gridNN()"""
+
+    #gridXGBoost()
+    gridSVM()

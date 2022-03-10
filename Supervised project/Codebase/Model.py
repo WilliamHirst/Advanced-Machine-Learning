@@ -246,3 +246,42 @@ class Model(SupervisedSolver):
 
         self.predict = lambda X: np.around(model(X).numpy().ravel())
         self.model = model
+
+
+class AutoEncoder(Model):
+  """
+  Parameters
+  ----------
+  output_units: int
+    Number of output units
+  
+  code_size: int
+    Number of units in bottle neck
+  """
+
+  def __init__(self, output_units, code_size=8):
+    super().__init__()
+    self.encoder = tf.keras.Sequential([
+      tf.keras.layers.Dense(64, activation='relu'),
+      tf.keras.layers.Dropout(0.1),
+      tf.keras.layers.Dense(32, activation='relu'),
+      tf.keras.layers.Dropout(0.1),
+      tf.keras.layers.Dense(16, activation='relu'),
+      tf.keras.layers.Dropout(0.1),
+      tf.keras.layers.Dense(code_size, activation='relu')
+    ])
+    self.decoder = tf.keras.Sequential([
+      tf.keras.layers.Dense(16, activation='relu'),
+      tf.keras.layers.Dropout(0.1),
+      tf.keras.layers.Dense(32, activation='relu'),
+      tf.keras.layers.Dropout(0.1),
+      tf.keras.layers.Dense(64, activation='relu'),
+      tf.keras.layers.Dropout(0.1),
+      tf.keras.layers.Dense(output_units, activation='sigmoid')
+    ])
+  
+  def call(self, inputs):
+    encoded = self.encoder(inputs)
+    decoded = self.decoder(encoded)
+    return decoded
+  
