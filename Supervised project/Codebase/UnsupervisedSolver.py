@@ -25,7 +25,7 @@ class UnsupervisedSolver:
         self.model = m()
 
     def train(self):
-        self.trainModel = self.fit(self.X_train, y_train)
+        self.trainModel = self.fit(self.X_train, self.X_val, self.y_val)
 
     def predict(self, X_all):
         prediction = self.model_predict(X_all)
@@ -41,19 +41,19 @@ if __name__ == "__main__":
 
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-    # DH.removeBadFeatures(40)
-    #DH.fillWithImputer()
-    #DH.standardScale()
-    # X_background, X_all, y_all = DH.AE_prep()
-    # DH.removeOutliers(6)
-    # DH.kMeansClustering()
+    #DH.removeBadFeatures(40)
+    DH.fillWithImputer()
+    DH.standardScale()
+    X_b, y_b, X_all, y_all = DH.AE_prep()
+    #DH.removeOutliers(6)
+    #DH.kMeansClustering()
     #DH.split()
 
     #X_train, X_val, y_train, y_val = DH(include_test=True)
     #print(y_val, np.shape(y_val))
 
-    #US = UnsupervisedSolver(X_train, y_train, X_val, y_val)
-    #US.getModel("svm")
-    #US.train()
+    US = UnsupervisedSolver(X_b, y_b, X_all, y_all)
+    US.getModel("autoencoder")
+    US.train()
 
   

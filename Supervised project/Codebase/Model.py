@@ -227,10 +227,10 @@ class Model(SupervisedSolver):
         encoder = tf.keras.Model(input, x2, name="encoder")
 
         latent_input = tf.keras.layers.Input(shape=8, name="decoder_input")
-        x = tf.keras.layers.Dense(16, activation='relu')(input)
+        x = tf.keras.layers.Dense(16, activation='relu')(latent_input)
         x1 = tf.keras.layers.Dense(32, activation='relu')(x)
         output = tf.keras.layers.Dense(1, activation='sigmoid')(x1)
-        decoder = tf.keras.Model(latent_input, output, name="encoder")
+        decoder = tf.keras.Model(latent_input, output, name="decoder")
 
         outputs = decoder(encoder(input))
         AE_model = tf.keras.Model(input, outputs, name="AE_model")
@@ -238,39 +238,17 @@ class Model(SupervisedSolver):
         self.optimizer = optimizers.Adam()
         AE_model.compile(loss="mae", optimizer=self.optimizer, metrics=["accuracy"])
 
-        self.fit = lambda X_train: self.model.fit(
+        self.fit = lambda X_train, X_val, y_val: self.model.fit(
             X_train,
             X_train,
-            epochs=20,
+            epochs=50,
             batch_size=512,
             shuffle=True,
-        )  # validation_data=(X_all, X_all),
+            validation_data=(X_val, y_val)
+            
+        )
 
         self.predict = lambda X: np.around(AE_model(X).numpy().ravel())
         self.model = AE_model
 
 
-class AutoEncoder(Model):
-
-  def __init__(self, output_units, code_size=8):
-    super().__init__()
-    self.encoder = tf.keras.Sequential([
-      tf.keras.layers.Dense(64, activation='relu'),
-      tf.keras.layers.Dropout(0.1),
-      tf.keras.layers.Dense(32, activation='relu'),
-      tf.keras.layers.Dropout(0.1),
-      tf.keras.layers.Dense(16, activation='relu'),
-      tf.keras.layers.Dropout(0.1),
-      tf.keras.layers.Dense(code_size, activation='relu')
-    ])
-    self.decoder = tf.keras.Sequential([
-      tf.keras.layers.Dense(16, activation='relu'),
-      tf.keras.layers.Dropout(0.1),
-      tf.keras.layers.Dense(32, activation='relu'),
-      tf.keras.layers.Dropout(0.1),
-      tf.keras.layers.Dense(64, activation='relu'),
-      tf.keras.layers.Dropout(0.1),
-      tf.keras.layers.Dense(output_units, activation='sigmoid')
-    ])
-  
-  
