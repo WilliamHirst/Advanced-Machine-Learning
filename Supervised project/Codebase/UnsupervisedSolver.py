@@ -2,7 +2,7 @@ import numpy as np
 import Model as M
 from DataHandler import DataHandler
 import tensorflow as tf
-from tensorflow.keras import optimizers  # If we need regularizers
+from tensorflow.keras import optimizers, Model  # If we need regularizers
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
@@ -32,31 +32,28 @@ class UnsupervisedSolver:
         print(prediction, np.shape(prediction))
 
 
+
+  
+
 if __name__ == "__main__":
     import time
+
 
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     # DH.removeBadFeatures(40)
-    DH.fillWithImputer()
-    DH.standardScale()
+    #DH.fillWithImputer()
+    #DH.standardScale()
     # X_background, X_all, y_all = DH.AE_prep()
     # DH.removeOutliers(6)
     # DH.kMeansClustering()
-    DH.split()
+    #DH.split()
 
-    X_train, X_val, y_train, y_val = DH(include_test=True)
-    print(y_val, np.shape(y_val))
+    #X_train, X_val, y_train, y_val = DH(include_test=True)
+    #print(y_val, np.shape(y_val))
 
-    US = UnsupervisedSolver(X_train, y_train, X_val, y_val)
-    US.getModel("svm")
-    US.train()
+    #US = UnsupervisedSolver(X_train, y_train, X_val, y_val)
+    #US.getModel("svm")
+    #US.train()
 
-    predict = US.predict(X_val)
-
-    t1 = time.time()
-    total_n = t1 - t0
-    print("{:.2f}s".format(total_n))
-
-    acc = np.sum(np.equal(predict, y_val.ravel())) / len(y_val) * 100
-    print(f"Accuracy: {acc:.1f}%")
+  

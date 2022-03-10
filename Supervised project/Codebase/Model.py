@@ -4,7 +4,7 @@ from SupervisedSolver import SupervisedSolver
 from sklearn.tree import DecisionTreeRegressor
 import xgboost as xgb
 import numpy as np
-from tensorflow.keras.models import Model
+
 
 
 class Model(SupervisedSolver):
@@ -220,21 +220,23 @@ class Model(SupervisedSolver):
         self.model = classifier
 
     def autoEncoders(self):
-        model = tf.keras.Sequential(
-            [
-                tf.keras.layers.Dense(
-                    32, activation="relu", input_shape=(self.nrFeatures,)
-                ),
-                tf.keras.layers.Dense(16, activation="relu"),
-                tf.keras.layers.Dense(8, activation="relu"),
-                tf.keras.layers.Dense(16, activation="relu"),
-                tf.keras.layers.Dense(32, activation="relu"),
-                tf.keras.layers.Dense(1, activation="sigmoid"),
-            ]
-        )
+        input = tf.keras.layers.Input(shape=self.nrFeatures, name="encoder_input")
+        x = tf.keras.layers.Dense(32, activation='relu')(input)
+        x1 = tf.keras.layers.Dense(16, activation='relu')(x)
+        x2 = tf.keras.layers.Dense(8, activation='relu')(x1)
+        encoder = tf.keras.Model(input, x2, name="encoder")
+
+        latent_input = tf.keras.layers.Input(shape=8, name="decoder_input")
+        x = tf.keras.layers.Dense(16, activation='relu')(input)
+        x1 = tf.keras.layers.Dense(32, activation='relu')(x)
+        output = tf.keras.layers.Dense(1, activation='sigmoid')(x1)
+        decoder = tf.keras.Model(latent_input, output, name="encoder")
+
+        outputs = decoder(encoder(input))
+        AE_model = tf.keras.Model(input, outputs, name="AE_model")
 
         self.optimizer = optimizers.Adam()
-        model.compile(loss="mae", optimizer=self.optimizer, metrics=["accuracy"])
+        AE_model.compile(loss="mae", optimizer=self.optimizer, metrics=["accuracy"])
 
         self.fit = lambda X_train: self.model.fit(
             X_train,
@@ -244,20 +246,11 @@ class Model(SupervisedSolver):
             shuffle=True,
         )  # validation_data=(X_all, X_all),
 
-        self.predict = lambda X: np.around(model(X).numpy().ravel())
-        self.model = model
+        self.predict = lambda X: np.around(AE_model(X).numpy().ravel())
+        self.model = AE_model
 
 
 class AutoEncoder(Model):
-  """
-  Parameters
-  ----------
-  output_units: int
-    Number of output units
-  
-  code_size: int
-    Number of units in bottle neck
-  """
 
   def __init__(self, output_units, code_size=8):
     super().__init__()
@@ -280,8 +273,4 @@ class AutoEncoder(Model):
       tf.keras.layers.Dense(output_units, activation='sigmoid')
     ])
   
-  def call(self, inputs):
-    encoded = self.encoder(inputs)
-    decoded = self.decoder(encoded)
-    return decoded
   
