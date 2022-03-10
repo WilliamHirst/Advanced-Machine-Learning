@@ -220,35 +220,34 @@ class Model(SupervisedSolver):
         self.model = classifier
 
     def autoEncoders(self):
-        input = tf.keras.layers.Input(shape=self.nrFeatures, name="encoder_input")
-        x = tf.keras.layers.Dense(32, activation='relu')(input)
+        inputs = tf.keras.layers.Input(shape=self.nrFeatures, name="encoder_input")
+        x = tf.keras.layers.Dense(32, activation='relu')(inputs)
         x1 = tf.keras.layers.Dense(16, activation='relu')(x)
         x2 = tf.keras.layers.Dense(8, activation='relu')(x1)
-        encoder = tf.keras.Model(input, x2, name="encoder")
+        encoder = tf.keras.Model(inputs, x2, name="encoder")
 
         latent_input = tf.keras.layers.Input(shape=8, name="decoder_input")
         x = tf.keras.layers.Dense(16, activation='relu')(latent_input)
         x1 = tf.keras.layers.Dense(32, activation='relu')(x)
-        output = tf.keras.layers.Dense(1, activation='sigmoid')(x1)
+        output = tf.keras.layers.Dense(30, activation='relu')(x1)
         decoder = tf.keras.Model(latent_input, output, name="decoder")
 
-        outputs = decoder(encoder(input))
-        AE_model = tf.keras.Model(input, outputs, name="AE_model")
+        outputs = decoder(encoder(inputs))
+        AE_model = tf.keras.Model(inputs, outputs, name="AE_model")
 
         self.optimizer = optimizers.Adam()
-        AE_model.compile(loss="mae", optimizer=self.optimizer, metrics=["accuracy"])
+        AE_model.compile(loss="msle", optimizer=self.optimizer, metrics=["mse"])
 
-        self.fit = lambda X_train, X_val, y_val: self.model.fit(
+        self.fit = lambda X_train, X_test: self.model.fit(
             X_train,
             X_train,
             epochs=50,
             batch_size=512,
             shuffle=True,
-            validation_data=(X_val, y_val)
-            
+            validation_data=(X_test, X_test)
         )
 
-        self.predict = lambda X: np.around(AE_model(X).numpy().ravel())
+        self.predict = lambda X: AE_model(X).numpy()
         self.model = AE_model
 
 

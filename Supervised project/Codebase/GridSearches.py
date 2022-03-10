@@ -10,7 +10,7 @@ from tensorflow.keras import optimizers
 import keras_tuner as kt
 from sklearn.model_selection import PredefinedSplit
 from Functions import timer
-from Model import AutoEncoder
+
 
 
 
@@ -206,34 +206,70 @@ def gridSVM():
 def gridautoencoder():
     DH.fillWithImputer()
     DH.standardScale()
-    DH.split()
-    X_train, X_val, y_train, y_val = DH(include_test=True)
+    X_b, y_b, X_all, y_all = DH.AE_prep()
     
     
     start_time = timer(None)
-
-    model = AutoEncoder(output_units=.shape[1])
-    # configurations of model
-    model.compile(loss='msle', metrics=['mse'], optimizer='adam')
-
-    history = model.fit(
-        ,
-        ,
-        epochs=20,
-        batch_size=512,
-        validation_data=(, )
+    tuner = kt.Hyperband(
+        AE_model_builder,
+        objective="val_accuracy",
+        max_epochs=50,
+        factor=3,
+        directory="GridSearches",
+        project_name="AE",
+        overwrite=True,
     )
 
+    tuner.search(X_b, X_b, epochs=100, validation=(X_all, y_all))
+    timer(start_time)
+    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
+    print(
+        f"""
+    
+    """
+    )
 
+    state = True
+    while state == True:
+        answ = input("Do you want to save model? (y/n) ")
+        if answ == "y":
+            name = input("name: ")
+            tuner.hypermodel.build(best_hps).save(f"../tf_models/model_{name}.h5")
+            state = False
+            print("Model saved")
+        elif answ == "n":
+            state = False
+            print("Model not saved")
+
+def AE_model_builder(hp):
+    inputs = tf.keras.layers.Input(shape=30, name="encoder_input")
+    x = tf.keras.layers.Dense(32, activation='relu')(inputs)
+    x1 = tf.keras.layers.Dense(16, activation='relu')(x)
+    x2 = tf.keras.layers.Dense(8, activation='relu')(x1)
+    encoder = tf.keras.Model(inputs, x2, name="encoder")
+
+    latent_input = tf.keras.layers.Input(shape=8, name="decoder_input")
+    x = tf.keras.layers.Dense(16, activation='relu')(latent_input)
+    x1 = tf.keras.layers.Dense(32, activation='relu')(x)
+    output = tf.keras.layers.Dense(1, activation='sigmoid')(x1)
+    decoder = tf.keras.Model(latent_input, output, name="decoder")
+
+    outputs = decoder(encoder(inputs))
+    AE_model = tf.keras.Model(inputs, outputs, name="AE_model")
+
+    hp_learning_rate = hp.Choice("learning_rate", values=[9e-2, 9.5e-2, 1e-3, 1.5e-3])
+    optimizer = optimizers.Adam(hp_learning_rate)
+    AE_model.compile(loss="mae", optimizer=optimizer, metrics=["accuracy"])
+    
+    return AE_model
 
 if __name__ == "__main__":
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-    X, Y = DH(include_test=False)
     
-
-    """with tf.device("/CPU:0"):
-        gridNN()"""
+    with tf.device("/CPU:0"):
+        #gridNN()
+        gridautoencoder()
 
     #gridXGBoost()
-    gridSVM()
+    #gridSVM()

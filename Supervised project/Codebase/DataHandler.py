@@ -10,6 +10,8 @@ class DataHandler:
 
         self.nrEvents = len(self.y_train)
         self.nrFeatures = len(self.X_train[0])
+        
+        self.checksplit = 0
 
     def __call__(self, include_test = False):
         if include_test:
@@ -66,6 +68,8 @@ class DataHandler:
 
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
         self.X_train, self.y_train, test_size=t_size, random_state = 0)
+        
+        self.checksplit = 1
     
     def setNanToMean(self):
         """
@@ -118,11 +122,16 @@ class DataHandler:
         np.append(self.X_train, label_likelyhood.reshape(len(label_likelyhood), 1), axis=1)
 
     def AE_prep(self):
-        X_all = self.X_train.copy()
-        y_all = self.y_train.copy()
-
-        index_background = np.where(y_all == 0)[0]
-        X_background = X_all[index_background, :]
-        y_background = y_all[index_background]
-
-        return X_background, y_background, X_all, y_all
+        if self.checksplit == 0:
+            self.split()
+        
+        X_train = self.X_train.copy()
+        y_train = self.y_train.copy()
+        
+        X_test = self.X_test.copy()
+        y_test = self.y_test.copy()
+        
+        index_background = np.where(y_train == 0)[0]
+        X_background = X_train[index_background, :]
+        y_background = y_train[index_background]
+        return X_background, y_background, X_test, y_test
