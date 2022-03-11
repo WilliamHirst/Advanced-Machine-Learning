@@ -1,10 +1,12 @@
 import numpy as np
+import pandas as pd
 import Model as M
 from DataHandler import DataHandler
 import tensorflow as tf
 from tensorflow.keras import optimizers, Model  # If we need regularizers
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
 
 # import xgboost as xgb
 
@@ -27,14 +29,29 @@ class UnsupervisedSolver:
     def train(self):
         self.trainModel = self.fit(self.X_train, X_val)
 
-    def predict(self, X_val):
+    def predict(self, X_val, y_val):
         prediction = self.model_predict(X_val)
-        print(prediction, np.shape(prediction))
         
-        recon_error = tf.keras.losses.msle(prediction, X_val)
+        threshold = self.findThreshold()
+
+        errors = tf.keras.losses.msle(prediction, X_val)
+        anom_mask = pd.Series(errors) > threshold 
+        new_pred = anom_mask.map(lambda x: 1 if x == True else 0)
+
+        new_pred = new_pred.to_numpy()
+        print(f"Accuracy: {accuracy_score(new_pred, y_val)*100}%")
+
         
         
+    def findThreshold(self):
+        reconstruct = self.model_predict(self.X_train)
+        recon_error = tf.keras.losses.msle(reconstruct, self.X_train)
+        threshold = np.mean(recon_error.numpy()) + np.std(recon_error.numpy())    
         
+        return threshold
+
+    
+
 
 
     def pairwise_distance(self, X, Y):
@@ -63,5 +80,5 @@ if __name__ == "__main__":
         US = UnsupervisedSolver(X_train)
         US.getModel("autoencoder")
         US.train()
-        US.predict(X_val)
+        US.predict(X_val, y_val)
         
