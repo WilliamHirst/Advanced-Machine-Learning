@@ -13,9 +13,9 @@ from Functions import timer
 
 
 
-
+weights = np.load("../Data/weights.npy")
 DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-X, Y = DH(include_test=False)
+
 
 
 def gridXGBoost():
@@ -23,17 +23,24 @@ def gridXGBoost():
     from joblib import dump, load
     import os
     start_time = timer(None)
+
+    X, Y = DH(include_test=False)
+    sum_wpos = sum(weights[i] for i in range(len(X)) if Y[i] == 1.0)
+    sum_wneg = sum(weights[i] for i in range(len(X)) if Y[i] == 0.0)
+
     DH.split()
     X_train, X_val, y_train, y_val = DH(include_test=True)
     split_index = [-1]*len(X_train) + [0]*len(X_val)
     X = np.concatenate((X_train, X_val), axis=0)
     y = np.concatenate((y_train, y_val), axis=0)    
-
+    #scale_pos_weight =  sum_wneg/sum_wpos ,
     xgb = XGBClassifier(
         use_label_encoder=False,
+        
         objective="binary:logistic",
-        eval_metric="error",
+        eval_metric= 'ams@0.15',
         tree_method="hist",
+        
         max_features=20,
         nthread=1,
         subsample=0.9,

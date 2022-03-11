@@ -31,6 +31,7 @@ for row in csvreader:
 features = np.asarray(features)
 features = np.where(features == -999.0, np.NaN, features)
 targets = np.asarray(targets)
+weights = features[:, -1]
 column_names = np.asarray(column_names)
 
 
@@ -38,6 +39,7 @@ column_names = np.asarray(column_names)
 np.save("../Data/rawFeatures_TR.npy", features[:, 1:-1])
 np.save("../Data/rawTargets_TR.npy", targets)
 np.save("../Data/column_names.npy", column_names[1:-1])
+np.save("../Data/weights.npy", weights)
 
 file = open("../Data/test.csv")
 csvreader = csv.reader(file)
@@ -55,6 +57,6 @@ for row in csvreader:
 features = np.asarray(features)
 features = np.where(features == -999.0, np.NaN, features)
 
-np.save("../Data/featuresTest.npy", features)
+np.save("../Data/featuresTest.npy", features[:, 1:])
 
 

@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.keras import optimizers
 import matplotlib.pyplot as plt
 import plot_set
+from Functions import *
 
 
 # Data handling
@@ -22,13 +23,17 @@ hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 
 # Train to find best epoch
 print("Training model.")
-history = hypermodel.fit(X, Y, epochs=1000, batch_size=4000, validation_split=0.2)
+history = hypermodel.fit(X, Y, epochs=100, batch_size=4000, validation_split=0.2)
 acc_hist = history.history["val_accuracy"]
 loss_hist = history.history["val_loss"]
 best_epoch = acc_hist.index(max(acc_hist))
 
-print(f"Validation loss, Validation accuracy : {loss_hist[best_epoch]:.2f} , {acc_hist[best_epoch]*100:.2f}%")
+#Calculate the AMS of the test data with our model.
+X_test = np.load("../Data/featuresTest.npy")
+#ams = AMS(hypermodel.predict(X_test))
 
+print(f"\nValidation loss, Validation accuracy : {loss_hist[best_epoch]:.2f} , {acc_hist[best_epoch]*100:.2f}%")
+#print(f"\nAMS : {ams:.2f}")
 
 fig, ax1 = plt.subplots(num=0, dpi=80, facecolor='w', edgecolor='k')
 fig.suptitle("Neural network history", fontsize=16)
