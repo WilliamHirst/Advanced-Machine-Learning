@@ -61,7 +61,7 @@ class UnsupervisedSolver:
 
 if __name__ == "__main__":
     import time
-
+    tf.random.set_seed(1)
 
     t0 = time.time()
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     #print(y_val, np.shape(y_val))
 
     with tf.device("/CPU:0"):
-        US = UnsupervisedSolver(X_train)
+        US = UnsupervisedSolver(X_train, y_train, X_val, y_val)
         US.getModel("autoencoder")
         US.train()
         US.predict(X_val, y_val)

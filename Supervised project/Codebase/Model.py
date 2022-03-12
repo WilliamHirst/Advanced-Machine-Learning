@@ -7,6 +7,7 @@ import numpy as np
 
 
 
+
 class Model(SupervisedSolver):
     def __init__(self, method, nrFeatures, epochs=None, batchSize=None, depth=None):
         methods = {
@@ -222,12 +223,12 @@ class Model(SupervisedSolver):
     def autoEncoders(self):
         inputs = tf.keras.layers.Input(shape=self.nrFeatures, name="encoder_input")
         x = tf.keras.layers.Dense(25, activation='relu')(inputs)
-        x1 = tf.keras.layers.Dense(16, activation='relu')(x)
-        x2 = tf.keras.layers.Dense(8, activation='relu')(x1)
+        x1 = tf.keras.layers.Dense(20, activation='relu')(x)
+        x2 = tf.keras.layers.Dense(5, activation='relu')(x1)
         encoder = tf.keras.Model(inputs, x2, name="encoder")
 
-        latent_input = tf.keras.layers.Input(shape=8, name="decoder_input")
-        x = tf.keras.layers.Dense(16, activation='relu')(latent_input)
+        latent_input = tf.keras.layers.Input(shape=5, name="decoder_input")
+        x = tf.keras.layers.Dense(20, activation='relu')(latent_input)
         x1 = tf.keras.layers.Dense(25, activation='relu')(x)
         output = tf.keras.layers.Dense(30, activation='relu')(x1)
         decoder = tf.keras.Model(latent_input, output, name="decoder")

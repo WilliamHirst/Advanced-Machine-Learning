@@ -11,21 +11,24 @@ import keras_tuner as kt
 from sklearn.model_selection import PredefinedSplit
 from Functions import timer
 
+# for custom activation function
+from keras import backend as K
+from keras.utils.generic_utils import get_custom_objects
 
-
-
+get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
 
 
 def gridXGBoost():
     import joblib
     from joblib import dump, load
     import os
+
     start_time = timer(None)
     DH.split()
     X_train, X_val, y_train, y_val = DH(include_test=True)
-    split_index = [-1]*len(X_train) + [0]*len(X_val)
+    split_index = [-1] * len(X_train) + [0] * len(X_val)
     X = np.concatenate((X_train, X_val), axis=0)
-    y = np.concatenate((y_train, y_val), axis=0)    
+    y = np.concatenate((y_train, y_val), axis=0)
 
     xgb = XGBClassifier(
         use_label_encoder=False,
@@ -39,23 +42,21 @@ def gridXGBoost():
         verbosity=0,
     )
     params = {
-                "n_estimator": [50,100,200,300,400,500],
-                "max_dept": [1,2,3,4,5,6],
-                "eta": [1e-1,5e-2,1e-2,5e-3]
-    } 
-                
-    pds = PredefinedSplit(test_fold = split_index)
+        "n_estimator": [50, 100, 200, 300, 400, 500],
+        "max_dept": [1, 2, 3, 4, 5, 6],
+        "eta": [1e-1, 5e-2, 1e-2, 5e-3],
+    }
 
-    GridSearch = GridSearchCV(xgb,
-                              param_grid=params,
-                              scoring="roc_auc",
-                              cv=pds,
-                              verbose=3)              
+    pds = PredefinedSplit(test_fold=split_index)
+
+    GridSearch = GridSearchCV(
+        xgb, param_grid=params, scoring="roc_auc", cv=pds, verbose=3
+    )
     GridSearch.fit(X, y)
     timer(start_time)
     best_model = GridSearch.best_estimator_
-    best_score = np.sum(np.where(best_model.predict(X_val) == y_val, 1, 0))/len(X_val)
-    
+    best_score = np.sum(np.where(best_model.predict(X_val) == y_val, 1, 0)) / len(X_val)
+
     print("\n Best score:")
     print(best_score)
 
@@ -71,7 +72,7 @@ def gridXGBoost():
             dirname = os.getcwd()
             filename = os.path.join(dirname, f"sklearn_models/model_{name}.joblib")
             print(filename)
-            dump(best_model, filename) 
+            dump(best_model, filename)
             state = False
             print("Model saved")
         elif answ == "n":
@@ -150,7 +151,6 @@ def model_builder(hp):
     return model
 
 
-
 def gridSVM():
     import joblib
     from joblib import dump, load
@@ -164,13 +164,11 @@ def gridSVM():
     start_time = timer(None)
     X_b, y_b, X_all, y_all = DH.AE_prep()
 
-
-    
     params = {
-                "kernel": ["poly", "rbf"],
-                "nu": [0.01, 0.05, 0.1, 0.2, 0.3] ,
-                "max_iter": [1000, 10000, 50000] 
-    } 
+        "kernel": ["poly", "rbf"],
+        "nu": [0.01, 0.05, 0.1, 0.2, 0.3],
+        "max_iter": [1000, 10000, 50000],
+    }
     best_kernel = "linear"
     best_nu = 0.01
     best_max_iter = 10
@@ -179,40 +177,36 @@ def gridSVM():
         for nu in params["nu"]:
             for max_iter in params["max_iter"]:
                 print(f"Kernel: {kernel}, Nu: {nu}, Max_iter: {max_iter}")
-                svm = OneClassSVM(kernel = kernel, nu=nu, max_iter=max_iter)
+                svm = OneClassSVM(kernel=kernel, nu=nu, max_iter=max_iter)
                 svm.fit(X_b)
                 prediction = np.around(svm.predict(X_all))
                 predictin = np.where(prediction == -1, 1, 0)
-                score =  np.sum(np.equal(prediction, y_all)) / len(y_all) * 100
+                score = np.sum(np.equal(prediction, y_all)) / len(y_all) * 100
                 print(f"{score} %")
                 if score > best_score:
                     best_score = score
                     best_kernel = kernel
                     best_nu = nu
                     best_max_iter = max_iter
-    
 
-
-    
     timer(start_time)
-    
-    
+
     print("\n Best score:")
     print(best_score)
 
     print("\n Best hyperparameters: ")
     print(f"Kernel: {kernel}, Nu: {nu}, Max_iter: {max_iter}")
 
+
 def gridautoencoder():
     DH.fillWithImputer()
     DH.standardScale()
     X_b, y_b, X_all, y_all = DH.AE_prep()
-    
-    
+
     start_time = timer(None)
     tuner = kt.Hyperband(
         AE_model_builder,
-        objective="val_accuracy",
+        objective=kt.Objective("val_mse", direction="min"),
         max_epochs=50,
         factor=3,
         directory="GridSearches",
@@ -220,13 +214,23 @@ def gridautoencoder():
         overwrite=True,
     )
 
-    tuner.search(X_b, X_b, epochs=100, validation=(X_all, y_all))
+    tuner.search(X_b, X_b, epochs=100, validation_data=(X_all, X_all))
     timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
     print(
         f"""
-    
+    For Encoder: \n 
+    First layer has {best_hps.get('num_of_neurons0')} with activation {best_hps.get('0_act')} \n
+    Second layer has {best_hps.get('num_of_neurons1')} with activation {best_hps.get('1_act')} \n
+    Third layer has activation {best_hps.get('2_act')} \n
+    \n
+    For Decoder: \n 
+    First layer has {best_hps.get('num_of_neurons5')} with activation {best_hps.get('5_act')}\n
+    Second layer has {best_hps.get('num_of_neurons6')} with activation {best_hps.get('6_act')}\n
+    Third layer has activation {best_hps.get('7_act')}\n
+    \n
+    with learning rate = {best_hps.get('learning_rate')}
     """
     )
 
@@ -242,17 +246,34 @@ def gridautoencoder():
             state = False
             print("Model not saved")
 
+
 def AE_model_builder(hp):
     inputs = tf.keras.layers.Input(shape=30, name="encoder_input")
-    x = tf.keras.layers.Dense(32, activation='relu')(inputs)
-    x1 = tf.keras.layers.Dense(16, activation='relu')(x)
-    x2 = tf.keras.layers.Dense(8, activation='relu')(x1)
+    x = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons0", min_value=17, max_value=30, step=1),
+        activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
+    )(inputs)
+    x1 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons1", min_value=9, max_value=16, step=1),
+        activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
+    )(x)
+    x2 = tf.keras.layers.Dense(
+        5, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"])
+    )(x1)
     encoder = tf.keras.Model(inputs, x2, name="encoder")
 
-    latent_input = tf.keras.layers.Input(shape=8, name="decoder_input")
-    x = tf.keras.layers.Dense(16, activation='relu')(latent_input)
-    x1 = tf.keras.layers.Dense(32, activation='relu')(x)
-    output = tf.keras.layers.Dense(1, activation='sigmoid')(x1)
+    latent_input = tf.keras.layers.Input(shape=5, name="decoder_input")
+    x = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons5", min_value=9, max_value=16, step=1),
+        activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
+    )(latent_input)
+    x1 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons6", min_value=17, max_value=30, step=1),
+        activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
+    )(x)
+    output = tf.keras.layers.Dense(
+        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu"])
+    )(x1)
     decoder = tf.keras.Model(latent_input, output, name="decoder")
 
     outputs = decoder(encoder(inputs))
@@ -260,16 +281,18 @@ def AE_model_builder(hp):
 
     hp_learning_rate = hp.Choice("learning_rate", values=[9e-2, 9.5e-2, 1e-3, 1.5e-3])
     optimizer = optimizers.Adam(hp_learning_rate)
-    AE_model.compile(loss="mae", optimizer=optimizer, metrics=["accuracy"])
-    
+    AE_model.compile(loss="msle", optimizer=optimizer, metrics=["mse"])
+
     return AE_model
 
+
 if __name__ == "__main__":
+    tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-    
+
     with tf.device("/CPU:0"):
-        #gridNN()
+        # gridNN()
         gridautoencoder()
 
-    #gridXGBoost()
-    #gridSVM()
+    # gridXGBoost()
+    # gridSVM()
