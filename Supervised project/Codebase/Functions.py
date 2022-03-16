@@ -2,6 +2,7 @@ import os
 import numpy as np
 import csv
 import math
+import pandas as pd
 
 
 def timer(start_time=None):
@@ -28,6 +29,13 @@ def create_solution_dictionary(solution):
                 solnDict[row[0]] = (row[1], row[2])
     return solnDict
 
+def write_to_csv(id, proba, threshold):
+    labels = np.where(proba > threshold, "s", "b")
+    rank_orders = np.argsort(proba) + 1 
+    df_submission = pd.DataFrame({'EventId': id,    
+                                    'RankOrder': rank_orders,
+                                    'Class': labels})
+    df_submission.to_csv('../Data/xgboost_test_pred.csv', index=False)
         
 def check_submission(submission, Nelements):
     """ Check that submission RankOrder column is correct:
