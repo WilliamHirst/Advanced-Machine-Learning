@@ -17,12 +17,11 @@ model = load(filename)
 score = model.score(X_val,y_val)
 
 X_test = np.load("../Data/featuresTest.npy")
-EventID = X_test[:,1]
-
-
+EventID = X_test[:,0].astype(int)
 proba = model.predict_proba(X_test[:,1:])[:,1]
-write_to_csv(id, proba, threshold)
-print(model.predict(X_test[:,1:]))
+write_to_csv(EventID, proba, threshold)
+
+
 
 exit()
 print(f"\nValidation accuracy : {score*100:.2f}")
