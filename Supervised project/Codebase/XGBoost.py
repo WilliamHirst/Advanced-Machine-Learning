@@ -21,6 +21,7 @@ EventID = X_test[:,0].astype(int)
 proba = model.predict_proba(X_test[:,1:])[:,1]
 write_to_csv(EventID, proba, threshold)
 
+AMS('../Data/solution-file.csv','../Data/xgboost_test_pred.csv')
 
 
 exit()
