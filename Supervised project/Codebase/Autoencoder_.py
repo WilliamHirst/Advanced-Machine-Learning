@@ -21,7 +21,7 @@ DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 DH.fillWithImputer()
 DH.standardScale()
 
-X_train, y_train, X_val, y_val = DH.AE_prep()
+X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
 
 
 # Get optimal model through previous gridsearch
@@ -71,12 +71,27 @@ print("Mean error: {} and std error: {}".format(np.mean(recon_error.numpy()), np
 threshold = 1000*(np.mean(recon_error.numpy()) + np.std(recon_error.numpy())   )     
 
 
-prediction = hypermodel(X_val)
-errors = tf.keras.losses.msle(prediction, X_val)
-anom_mask = pd.Series(errors) > threshold 
-new_pred = anom_mask.map(lambda x: 1 if x == True else 0)
+prediction_back = hypermodel(X_back_test)
+errorsback = tf.keras.losses.msle(prediction_back, X_back_test).numpy()
+errorsback = errorsback.reshape(len(errorsback), 1)
 
-new_pred = new_pred.to_numpy()
-print(f"Accuracy: {accuracy_score(new_pred, y_val)*100}%")
+prediction_sig = hypermodel(X_sig_test)
+errorssig = tf.keras.losses.msle(prediction_sig, X_sig_test).numpy()
+
+errorssig = errorssig.reshape(len(errorssig), 1)
+
+
+import seaborn as sns
+
+sns.set_style('darkgrid')
+sns.distplot(errorsback)
+sns.distplot(errorssig)
+plt.show()
+
+#anom_mask = pd.Series(errors) > threshold 
+#new_pred = anom_mask.map(lambda x: 1 if x == True else 0)
+
+#new_pred = new_pred.to_numpy()
+#print(f"Accuracy: {accuracy_score(new_pred, y_val)*100}%")
 
         

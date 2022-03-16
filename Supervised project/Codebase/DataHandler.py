@@ -121,10 +121,12 @@ class DataHandler:
         
         np.append(self.X_train, label_likelyhood.reshape(len(label_likelyhood), 1), axis=1)
 
-    def AE_prep(self):
+    def AE_prep(self, whole_split=False):
         if self.checksplit == 0:
             self.split()
         
+
+    
         X_train = self.X_train.copy()
         y_train = self.y_train.copy()
         
@@ -134,4 +136,14 @@ class DataHandler:
         index_background = np.where(y_train == 0)[0]
         X_background = X_train[index_background, :]
         y_background = y_train[index_background]
-        return X_background, y_background, X_test, y_test
+
+        if whole_split == False:
+            return X_background, y_background, X_test, y_test
+        else:
+            index_signal_test = np.where(y_test == 1)[0]
+            index_background_test = np.where(y_test == 0)[0]
+            X_signal_test = X_test[index_signal_test,:]
+            X_background_test = X_test[index_background_test, :]
+
+            return X_background, y_background, X_test, y_test, X_background_test, X_signal_test
+

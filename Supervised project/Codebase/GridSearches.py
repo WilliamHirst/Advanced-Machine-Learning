@@ -281,7 +281,7 @@ def AE_model_builder(hp):
 
     hp_learning_rate = hp.Choice("learning_rate", values=[9e-2, 9.5e-2, 1e-3, 1.5e-3])
     optimizer = optimizers.Adam(hp_learning_rate)
-    AE_model.compile(loss="msle", optimizer=optimizer, metrics=["mse"])
+    AE_model.compile(loss="mse", optimizer=optimizer, metrics=["mse"])
 
     return AE_model
 
