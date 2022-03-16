@@ -19,10 +19,8 @@ score = model.score(X_val,y_val)
 X_test = np.load("../Data/featuresTest.npy")
 EventID = X_test[:,0].astype(int)
 proba = model.predict_proba(X_test[:,1:])[:,1]
-write_to_csv(EventID, proba, threshold)
+name = '../Data/xgboost_test_pred.csv'
+write_to_csv(EventID, proba, threshold, name)
 
-AMS('../Data/solution-file.csv','../Data/xgboost_test_pred.csv')
 
-
-exit()
 print(f"\nValidation accuracy : {score*100:.2f}")

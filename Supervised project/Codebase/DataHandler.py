@@ -8,7 +8,7 @@ class DataHandler:
             self.X_train = features
             self.y_train = targets
 
-        self.nrEvents = len(self.y_train)
+        self.nrEvents = len(self.X_train[:,0])
         self.nrFeatures = len(self.X_train[0])
         
         self.checksplit = 0
@@ -101,7 +101,8 @@ class DataHandler:
         
     def importDataSet(self, train, test):
         self.X_train = np.load(f"../Data/{train}")
-        self.y_train = np.load(f"../Data/{test}")
+        if test != None:
+            self.y_train = np.load(f"../Data/{test}")
 
     def saveDataSet(self, featureName, targetName ):
         np.save(f"../Data/{featureName}", self.X_train)

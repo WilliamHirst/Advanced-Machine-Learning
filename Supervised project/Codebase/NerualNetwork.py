@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.keras import optimizers
 import matplotlib.pyplot as plt
 import plot_set
+from Functions import *
 
 
 # Data handling
@@ -22,12 +23,12 @@ hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 
 # Train to find best epoch
 print("Training model.")
-history = hypermodel.fit(X, Y, epochs=1000, batch_size=4000, validation_split=0.2)
+history = hypermodel.fit(X, Y, epochs=10, batch_size=4000, validation_split=0.2)
 acc_hist = history.history["val_accuracy"]
 loss_hist = history.history["val_loss"]
 best_epoch = acc_hist.index(max(acc_hist))
 
-print(f"Validation loss, Validation accuracy : {loss_hist[best_epoch]:.2f} , {acc_hist[best_epoch]*100:.2f}%")
+print(f"Validation loss, Validation accuracy : {loss_hist[best_epoch]:.2f} , {acc_hist[best_epoch]*100:.2f}%, bes epoch {best_epoch}")
 
 
 fig, ax1 = plt.subplots(num=0, dpi=80, facecolor='w', edgecolor='k')
@@ -47,3 +48,19 @@ ax2.tick_params(axis="y", labelcolor=color)
 fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
 plt.savefig("../figures/NN_hist.pdf", bbox_inches="tight")
 plt.show()
+
+"""
+Test data
+"""
+tf.random.set_seed(1)
+X_test = np.load("../Data/featuresTest.npy")
+EventID = X_test[:,0].astype(int)
+DH = DataHandler("featuresTest.npy")
+DH.fillWithImputer()
+DH.standardScale()
+threshold = 0.85
+X_test = DH.X_train
+proba = hypermodel.predict(X_test[:,1:]).ravel()
+print(proba)
+name = '../Data/NN_test_pred.csv'
+write_to_csv(EventID, proba, threshold, name)
