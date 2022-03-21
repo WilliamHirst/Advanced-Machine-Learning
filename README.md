@@ -8,6 +8,11 @@ The project participants are
 Both are Computational physicists that will work with machine learning on 
 particle collision data from CERN on their master degrees. 
 
+To run the code in the Codebase folder, simply run the following command
+```
+pip3 install -r requirements
+```
+
 
 
 Links used as inspiration: <br /> 
