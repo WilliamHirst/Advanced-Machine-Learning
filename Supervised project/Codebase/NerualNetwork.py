@@ -32,7 +32,7 @@ X_test = X[nr_train:,:]
 # Get optimal model through previous gridsearch
 print("Fetching optimal parameters...")
 name = "hypermodel"
-epochs = 10
+epochs = 500
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 
 # Train to find best epoch
@@ -45,7 +45,7 @@ best_epoch = acc_hist.index(max(acc_hist))
 print(f"Validation loss, Validation accuracy : {loss_hist[best_epoch]:.2f} , {acc_hist[best_epoch]*100:.2f}%, best epoch {best_epoch}")
 
 
-"""fig, ax1 = plt.subplots(num=0, dpi=80, facecolor='w', edgecolor='k')
+fig, ax1 = plt.subplots(num=0, dpi=80, facecolor='w', edgecolor='k')
 fig.suptitle("Neural network history", fontsize=16)
 color = plt.rcParams["axes.prop_cycle"].by_key()["color"][0]
 ax1.set_xlabel(r"#$Epochs$", fontsize=16)
@@ -61,7 +61,7 @@ ax2.tick_params(axis="y", labelcolor=color)
 
 fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
 plt.savefig("../figures/NN_hist.pdf", bbox_inches="tight")
-plt.show()"""
+plt.show()
 
 
 DH = DataHandler(X_train,Y)
@@ -74,20 +74,26 @@ b = proba[np.where(y_val == 0)]
 
 sigma =np.nanstd(b)
 diff = abs(np.mean(b) - np.mean(s))/sigma
+x_start = np.mean(b)
+x_end =np.mean(s)
+y_start = 3
 
-binsize = 500
+binsize = 100
 plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
-plt.hist(b, bins=binsize, histtype="stepfilled", facecolor="b",label = "Background")
-plt.hist(s, bins=binsize, histtype="stepfilled", facecolor="r",alpha=0.6, label = "Signal")
+plt.hist(b, bins=binsize, histtype="stepfilled", facecolor="b",label = "Background", density=True)
+plt.hist(s, bins=binsize, histtype="stepfilled", facecolor="r",alpha=0.6, label = "Signal", density=True)
 plt.xlabel("Output", fontsize=15)
 plt.ylabel("#-of-events", fontsize=15)
-#plt.plot([np.mean(b), np.mean(s)], [300, 300], "x-",label = 
-#            r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
-#            + f" = {diff:.2f}" + r"$\sigma_b$")
-plt.title("Neural network output distrubution: " 
-            + r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
-            + f" = {diff:.2f}" + r"$\sigma_b$")
+plt.title("Neural network output distribution", fontsize=15, fontweight = "bold")
 plt.legend(fontsize = 16)
+plt.annotate("", xy=(x_start,y_start),
+            xytext=(x_end,y_start),verticalalignment="center",
+            arrowprops={'arrowstyle': '|-|', 'lw': 1, "color":"black"}, va='center')
+plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
+                + f" = {diff:.2f}" + r"$\sigma_b$",
+                xy=(((x_start+x_end)/2), y_start+0.5), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
+
+plt.savefig("../figures/NN_output.pdf", bbox_inches="tight")
 plt.show()
 
 
