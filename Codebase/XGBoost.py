@@ -23,8 +23,8 @@ score = model.score(X_val,y_val)
 
 
 
-
-proba = model.predict_proba(X_val)[:,1].ravel()
+probas = model.predict_proba(X_val)
+proba = probas[:,1].ravel()
 
 s = proba[np.where(y_val == 1)]
 b = proba[np.where(y_val == 0)]
@@ -53,10 +53,15 @@ plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$"
                 xy=(((x_start+x_end)/2), y_start+0.5), xycoords='data',
                 fontsize=15.0,textcoords='data',ha='center')
 
-plt.savefig("../figures/XGB_output.pdf", bbox_inches="tight")
+plt.savefig("../figures/XGB/XGB_output.pdf", bbox_inches="tight")
 plt.show()
 
-skplt.metrics.plot_roc_curve(y_val, proba)
+
+skplt.metrics.plot_roc(y_val, probas)
+plt.xlabel("True positive rate", fontsize=15)
+plt.ylabel("False positive rate", fontsize=15)
+plt.title("XGBoost: ROC curve", fontsize=15, fontweight = "bold")
+plt.savefig("../figures/XGB/XGB_ROC.pdf", bbox_inches="tight")
 plt.show()
 exit()
 X_test = np.load("../Data/featuresTest.npy")

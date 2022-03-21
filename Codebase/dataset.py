@@ -54,9 +54,9 @@ class Dataset:
         binsize = 1000
         
         ax.hist(
-            B, bins=binsize, histtype="stepfilled", facecolor="b"
+            B, bins=binsize, histtype="stepfilled", facecolor="b", density=True
         )
-        ax.hist(S, bins=binsize, histtype="stepfilled", facecolor="r",alpha=0.6)
+        ax.hist(S, bins=binsize, histtype="stepfilled", facecolor="r",alpha=0.6, density=True)
         ax.set_xlim([np.nanmin(B)*1.2, np.nanmax(B)*0.6])
         ax.set_title( self.column_names[feature],  fontsize=12,fontweight="bold")   
 

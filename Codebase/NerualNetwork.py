@@ -1,4 +1,3 @@
-from xml.etree.ElementInclude import include
 import numpy as np
 import Model as M
 from DataHandler import DataHandler
@@ -21,7 +20,7 @@ DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 nr_train = DH.nrEvents
 #Scale and prepare data
 DH.X_train = np.concatenate((DH.X_train, X_test), axis=0)
-#DH.fillWithImputer()
+DH.fillWithImputer()
 DH.setNanToMean()
 DH.standardScale()
 X, Y = DH(include_test=False)
@@ -61,15 +60,16 @@ ax2.plot(history.history["val_loss"], color=color)
 ax2.tick_params(axis="y", labelcolor=color)
 
 fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
-plt.savefig("../figures/NN_hist.pdf", bbox_inches="tight")
+plt.savefig("../figures/Neural_network/NN_hist.pdf", bbox_inches="tight")
 plt.show()
 
 
 DH = DataHandler(X_train,Y)
 DH.split()
 X_train, X_val, y_train, y_val = DH(include_test = True)
-proba = hypermodel.predict(X_val).ravel()
-
+proba = hypermodel.predict(X_val)
+probas = np.concatenate((1-proba,proba),axis=1)
+proba = proba.ravel()
 s = proba[np.where(y_val == 1)]
 b = proba[np.where(y_val == 0)]
 
@@ -94,12 +94,16 @@ plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$"
                 + f" = {diff:.2f}" + r"$\sigma_b$",
                 xy=(((x_start+x_end)/2), y_start+0.5), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
 
-plt.savefig("../figures/NN_output.pdf", bbox_inches="tight")
+plt.savefig("../figures/Neural_network/NN_output.pdf", bbox_inches="tight")
 plt.show()
 
 
-skplt.metrics.plot_roc_curve(y_val, y_probas)
-
+skplt.metrics.plot_roc(y_val, probas)
+plt.xlabel("True positive rate", fontsize=15)
+plt.ylabel("False positive rate", fontsize=15)
+plt.title("Neural network: ROC curve", fontsize=15, fontweight = "bold")
+plt.savefig("../figures/Neural_network/NN_ROC.pdf", bbox_inches="tight")
+plt.show()
 
 exit()
 #Train network up to best epoch.
