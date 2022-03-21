@@ -198,10 +198,9 @@ def gridSVM():
     print(f"Kernel: {kernel}, Nu: {nu}, Max_iter: {max_iter}")
 
 
-def gridautoencoder():
-    DH.fillWithImputer()
-    DH.standardScale()
-    X_b, y_b, X_all, y_all = DH.AE_prep()
+def gridautoencoder(X_b, y_b, X_all, y_all):
+    
+    
 
     start_time = timer(None)
     tuner = kt.Hyperband(
@@ -248,31 +247,32 @@ def gridautoencoder():
 
 
 def AE_model_builder(hp):
-    inputs = tf.keras.layers.Input(shape=30, name="encoder_input")
+    global shape_data
+    inputs = tf.keras.layers.Input(shape=shape_data, name="encoder_input")
     x = tf.keras.layers.Dense(
-        units=hp.Int("num_of_neurons0", min_value=17, max_value=30, step=1),
+        units=hp.Int("num_of_neurons0", min_value=shape_data-5, max_value=shape_data, step=1),
         activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
     )(inputs)
     x1 = tf.keras.layers.Dense(
-        units=hp.Int("num_of_neurons1", min_value=9, max_value=16, step=1),
+        units=hp.Int("num_of_neurons1", min_value=9, max_value=shape_data-6, step=1),
         activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
     )(x)
     x2 = tf.keras.layers.Dense(
-        5, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"])
+        units=9, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"])
     )(x1)
     encoder = tf.keras.Model(inputs, x2, name="encoder")
 
-    latent_input = tf.keras.layers.Input(shape=5, name="decoder_input")
+    latent_input = tf.keras.layers.Input(shape=8, name="decoder_input")
     x = tf.keras.layers.Dense(
-        units=hp.Int("num_of_neurons5", min_value=9, max_value=16, step=1),
+        units=hp.Int("num_of_neurons5", min_value=9, max_value=shape_data-6, step=1),
         activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
     )(latent_input)
     x1 = tf.keras.layers.Dense(
-        units=hp.Int("num_of_neurons6", min_value=17, max_value=30, step=1),
+        units=hp.Int("num_of_neurons6", min_value=shape_data-5, max_value=shape_data, step=1),
         activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
     )(x)
     output = tf.keras.layers.Dense(
-        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu"])
+        shape_data, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu"])
     )(x1)
     decoder = tf.keras.Model(latent_input, output, name="decoder")
 
@@ -289,10 +289,16 @@ def AE_model_builder(hp):
 if __name__ == "__main__":
     tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
+    DH.removeBadFeatures()
+    DH.fillWithImputer()
+    DH.standardScale()
+    X_b, y_b, X_all, y_all = DH.AE_prep()
+    shape_data = np.shape(X_b)[1]
+    
 
     with tf.device("/CPU:0"):
         # gridNN()
-        gridautoencoder()
+        gridautoencoder(X_b, y_b, X_all, y_all)
 
     # gridXGBoost()
     # gridSVM()

@@ -75,31 +75,36 @@ class VAE(tf.keras.Model):
             return probs
         return logits
 
+class TrainPredVAE():
+    def __init__(self, model):
+        self.model = model
+        self.optimizer = tf.keras.optimizers.Adam()
+        self.model.compile(optimizer=optimizer)
 
-def log_normal_pdf(sample, mean, logvariance, raxis=1):
-    log2pi = tf.math.log(2.0 * np.pi)
-    return tf.reduce_sum(
-        -0.5 * ((sample - mean) ** 2 * tf.exp(-logvariance) + logvariance + log2pi),
-        axis=raxis,
-    )
+    def log_normal_pdf(self, sample, mean, logvariance, raxis=1):
+        log2pi = tf.math.log(2.0 * np.pi)
+        return tf.reduce_sum(
+            -0.5 * ((sample - mean) ** 2 * tf.exp(-logvariance) + logvariance + log2pi),
+            axis=raxis,
+        )
 
-def compute_loss(model, x):
-    mean, logvariance = model.encode(x)
-    z = model.reparameterize(mean, logvariance)
-    x_logit = model.decode(z)
-    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)
-    logpx_z = -tf.reduce_sum(cross_entropy, axis=1)
-    logpz = log_normal_pdf(z, 0, 0)
-    logqz_x = log_normal_pdf(z, mean, logvariance)
+    def compute_loss(self, x):
+        mean, logvariance = self.model.encode(x)
+        z = self.model.reparameterize(mean, logvariance)
+        x_logit = self.model.decode(z)
+        cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)
+        logpx_z = -tf.reduce_sum(cross_entropy, axis=1)
+        logpz = self.log_normal_pdf(z, 0, 0)
+        logqz_x = self.log_normal_pdf(z, mean, logvariance)
 
-    return -tf.reduce_mean(logpx_z + logpz - logqz_x)
+        return -tf.reduce_mean(logpx_z + logpz - logqz_x)
 
-@tf.function 
-def train_step(model, x):
-    with tf.GradientTape() as tape:
-        loss = compute_loss(model, x)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainabla_variables))
+    @tf.function 
+    def train_step(self, x):
+        with tf.GradientTape() as tape:
+            loss = self.compute_loss(x)
+        gradients = tape.gradient(loss, self.model.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.model.trainabla_variables))
 
 
 
@@ -120,9 +125,8 @@ if __name__ == "__main__":
     epochs = 50
     latentdim = 2
     batchsize = 4000
-    optimizer = tf.keras.optimizers.Adam()
 
-    vae = VAE(latentdim, batchsize).compile(optimizer=optimizer)
+    vae = VAE(latentdim, batchsize)
 
     with tf.device("/CPU:0"):
         for epoch in range(epochs +1):

@@ -18,6 +18,8 @@ get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)}
 print("Preparing data...")
 tf.random.set_seed(1)
 DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
+
+#DH.removeBadFeatures()
 DH.fillWithImputer()
 DH.standardScale()
 
@@ -60,7 +62,7 @@ ax2.plot(history.history["val_loss"], color=color)
 ax2.tick_params(axis="y", labelcolor=color)
 
 fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
-plt.savefig("../figures/AE_hist.pdf", bbox_inches="tight")
+plt.savefig("../figures/AE_loss.pdf", bbox_inches="tight")
 plt.show()
 
 
@@ -81,11 +83,21 @@ errorssig = tf.keras.losses.msle(prediction_sig, X_sig_test).numpy()
 errorssig = errorssig.reshape(len(errorssig), 1)
 
 
-import seaborn as sns
+#import seaborn as sns
 
-sns.set_style('darkgrid')
-sns.distplot(errorsback)
-sns.distplot(errorssig)
+#sns.set_style('darkgrid')
+#sns.distplot(errorsback, kde = True)
+#sns.distplot(errorssig, kde = True)
+#plt.legend()
+#plt.show()
+
+
+
+n, bins, patches = plt.hist(errorsback, 100, density=True, facecolor='b', alpha=1, label="Background")
+n, bins, patches = plt.hist(errorssig, 100, density=True, facecolor='r', alpha=0.6, label="Signal")
+fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
+plt.legend()
+plt.savefig("../figures/AE_hist.pdf", bbox_inches="tight")
 plt.show()
 
 #anom_mask = pd.Series(errors) > threshold 
