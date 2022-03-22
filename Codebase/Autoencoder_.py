@@ -7,6 +7,7 @@ from tensorflow.keras import optimizers
 import matplotlib.pyplot as plt
 import plot_set
 from sklearn.metrics import accuracy_score
+import scikitplot as skplt
 
 # for custom activation function
 from keras.utils.generic_utils import get_custom_objects
@@ -18,7 +19,7 @@ get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)}
 print("Preparing data...")
 tf.random.set_seed(1)
 DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-DH.fillWithImputer()
+DH.setNanToMean()#DH.fillWithImputer()
 DH.standardScale()
 
 X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
@@ -81,17 +82,64 @@ errorssig = tf.keras.losses.msle(prediction_sig, X_sig_test).numpy()
 errorssig = errorssig.reshape(len(errorssig), 1)
 
 
-import seaborn as sns
 
-sns.set_style('darkgrid')
-sns.distplot(errorsback)
-sns.distplot(errorssig)
+
+
+
+
+recon_val = hypermodel(X_val)
+err_val = tf.keras.losses.msle(recon_val, X_val).numpy()
+err_val = err_val.reshape(len(err_val), 1)
+
+s = err_val[np.where(y_val == 1)]
+b = err_val[np.where(y_val == 0)]
+
+sigma =np.nanstd(b)
+diff = abs(np.mean(b) - np.mean(s))/sigma
+x_start = np.mean(b) *5
+x_end =np.mean(s) *7
+y_start = 3 + 100
+
+
+plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
+n, bins, patches = plt.hist(errorsback, 1000, histtype="stepfilled", density=True, facecolor="b", label="Background")
+n, bins, patches = plt.hist(errorssig, 1000, histtype="stepfilled", density=True, alpha=0.6,facecolor="r", label="signal")
+plt.xlabel("Error", fontsize=15)
+plt.ylabel("#-of-events", fontsize=15)
+plt.title("Autoencoder error distribution", fontsize=15, fontweight = "bold")
+plt.annotate("", xy=(x_start,y_start),
+            xytext=(x_end,y_start),verticalalignment="center",
+            arrowprops={'arrowstyle': '|-|', 'lw': 1, "color":"black"}, va='center')
+plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
+                + f" = {diff:.2f}" + r"$\sigma_b$",
+                xy=(((x_start+x_end)/2), y_start+20), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
+
+plt.legend(fontsize = 16)
+plt.savefig("../figures/AE/AE_error1.pdf", bbox_inches="tight")
 plt.show()
 
-#anom_mask = pd.Series(errors) > threshold 
-#new_pred = anom_mask.map(lambda x: 1 if x == True else 0)
 
-#new_pred = new_pred.to_numpy()
-#print(f"Accuracy: {accuracy_score(new_pred, y_val)*100}%")
+plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
+plt.hist(b, bins=300, histtype="stepfilled", facecolor="b",label = "Background", density=True)
+plt.hist(s, bins=300, histtype="stepfilled", facecolor="r",alpha=0.6, label = "Signal", density=True)
+plt.legend(fontsize = 16)
+plt.xlabel("Error", fontsize=15)
+plt.ylabel("#-of-events", fontsize=15)
+plt.title("Autoencoder error distribution", fontsize=15, fontweight = "bold")
+plt.annotate("", xy=(x_start,y_start),
+            xytext=(x_end,y_start),verticalalignment="center",
+            arrowprops={'arrowstyle': '|-|', 'lw': 1, "color":"black"}, va='center')
+plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
+                + f" = {diff:.2f}" + r"$\sigma_b$",
+                xy=(((x_start+x_end)/2), y_start+20), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
+plt.savefig("../figures/AE/AE_error2.pdf", bbox_inches="tight")
+plt.show()
 
-        
+probas = np.concatenate((1-err_val, err_val),axis=1)
+
+skplt.metrics.plot_roc(y_val, probas)
+plt.xlabel("True positive rate", fontsize=15)
+plt.ylabel("False positive rate", fontsize=15)
+plt.title("Autoencoder: ROC curve", fontsize=15, fontweight = "bold")
+plt.savefig("../figures/AE/AE_ROC.pdf", bbox_inches="tight")
+plt.show()
