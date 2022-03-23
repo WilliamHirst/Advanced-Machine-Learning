@@ -34,7 +34,7 @@ hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 print("Training model.")
 with tf.device("/CPU:0"):
     history = hypermodel.fit(
-        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_val, X_val)
+        X_train, X_train, epochs=70, batch_size=4000, validation_data=(X_back_test, X_back_test)
     )
 acc_hist = history.history["val_mse"]
 loss_hist = history.history["val_loss"]
@@ -44,6 +44,7 @@ print(
     f"Validation loss, Validation mse : {loss_hist[best_epoch]:.2f} , {acc_hist[best_epoch]:.2f}%"
 )
 
+"""
 fig, ax1 = plt.subplots(num=0, dpi=80, facecolor="w", edgecolor="k")
 fig.suptitle("Autoencoder history", fontsize=16)
 color = plt.rcParams["axes.prop_cycle"].by_key()["color"][0]
@@ -63,7 +64,7 @@ ax2.tick_params(axis="y", labelcolor=color)
 fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
 plt.savefig("../figures/AE_hist.pdf", bbox_inches="tight")
 plt.show()
-
+"""
 
 
 reconstruct = hypermodel(X_train)
