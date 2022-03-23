@@ -199,9 +199,9 @@ def gridSVM():
 
 
 def gridautoencoder():
-    DH.fillWithImputer()
+    DH.setNanToMean()#DH.fillWithImputer()
     DH.standardScale()
-    X_b, y_b, X_all, y_all = DH.AE_prep()
+    X_b, y_b, X_all, y_all, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
 
     start_time = timer(None)
     tuner = kt.Hyperband(
@@ -214,7 +214,7 @@ def gridautoencoder():
         overwrite=True,
     )
 
-    tuner.search(X_b, X_b, epochs=100, validation_data=(X_all, X_all))
+    tuner.search(X_b, X_b, epochs=100, validation_data=(X_back_test, X_back_test))
     timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
@@ -223,7 +223,8 @@ def gridautoencoder():
     For Encoder: \n 
     First layer has {best_hps.get('num_of_neurons0')} with activation {best_hps.get('0_act')} \n
     Second layer has {best_hps.get('num_of_neurons1')} with activation {best_hps.get('1_act')} \n
-    Third layer has activation {best_hps.get('2_act')} \n
+    
+    Latent layer has {best_hps.get("lat_num")} with activation {best_hps.get('2_act')} \n
     \n
     For Decoder: \n 
     First layer has {best_hps.get('num_of_neurons5')} with activation {best_hps.get('5_act')}\n
@@ -232,7 +233,7 @@ def gridautoencoder():
     \n
     with learning rate = {best_hps.get('learning_rate')}
     """
-    )
+    )  
 
     state = True
     while state == True:
@@ -257,12 +258,13 @@ def AE_model_builder(hp):
         units=hp.Int("num_of_neurons1", min_value=9, max_value=16, step=1),
         activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
     )(x)
+    val = hp.Int("lat_num", min_value=1, max_value=8, step=1)
     x2 = tf.keras.layers.Dense(
-        5, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"])
+        units=val, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"])
     )(x1)
     encoder = tf.keras.Model(inputs, x2, name="encoder")
 
-    latent_input = tf.keras.layers.Input(shape=5, name="decoder_input")
+    latent_input = tf.keras.layers.Input(shape=val, name="decoder_input")
     x = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons5", min_value=9, max_value=16, step=1),
         activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
@@ -272,7 +274,7 @@ def AE_model_builder(hp):
         activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
     )(x)
     output = tf.keras.layers.Dense(
-        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu"])
+        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
     )(x1)
     decoder = tf.keras.Model(latent_input, output, name="decoder")
 
