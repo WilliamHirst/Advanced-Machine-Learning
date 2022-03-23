@@ -20,7 +20,7 @@ DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 nr_train = DH.nrEvents
 #Scale and prepare data
 DH.X_train = np.concatenate((DH.X_train, X_test), axis=0)
-DH.fillWithImputer()
+#DH.fillWithImputer()
 DH.setNanToMean()
 DH.standardScale()
 X, Y = DH(include_test=False)

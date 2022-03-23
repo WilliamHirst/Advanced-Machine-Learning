@@ -8,19 +8,29 @@ import matplotlib.pyplot as plt
 import plot_set
 from sklearn.metrics import accuracy_score
 import scikitplot as skplt
+from Functions import *
 
 # for custom activation function
 from keras.utils.generic_utils import get_custom_objects
 
 get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
 
-
-# Data handling
 print("Preparing data...")
 tf.random.set_seed(1)
+X_test = np.load("../Data/featuresTest.npy")
+EventID = X_test[:,0].astype(int)
+X_test = X_test[:,1:]
+
 DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-DH.setNanToMean()#DH.fillWithImputer()
+nr_train = DH.nrEvents
+DH.X_train = np.concatenate((DH.X_train, X_test), axis=0)
+DH.setNanToMean()
 DH.standardScale()
+X, Y = DH(include_test=False)
+
+X_train = X[: nr_train,:]
+X_test = X[nr_train:,:]
+DH.X_train = X_train
 
 X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
 
@@ -89,9 +99,6 @@ errorssig = errorssig.reshape(len(errorssig), 1)
 
 
 
-
-
-
 recon_val = hypermodel(X_val)
 err_val = tf.keras.losses.msle(recon_val, X_val).numpy()
 err_val = err_val.reshape(len(err_val), 1)
@@ -104,6 +111,13 @@ diff = abs(np.mean(b) - np.mean(s))/sigma
 x_start = np.mean(b) *5
 x_end =np.mean(s) *7
 y_start = 10 
+
+
+threshold = np.mean(b) + np.std(b)
+recon_val_test = hypermodel(X_test)
+proba = tf.keras.losses.msle(recon_val_test, X_test).numpy()
+name = '../Data/Autoencoder_test_pred.csv'
+#write_to_csv(EventID, proba, threshold, name)
 
 """
 plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
