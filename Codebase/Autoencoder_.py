@@ -34,14 +34,14 @@ hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 print("Training model.")
 with tf.device("/CPU:0"):
     history = hypermodel.fit(
-        X_train, X_train, epochs=70, batch_size=4000, validation_data=(X_back_test, X_back_test)
+        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_back_test, X_back_test)
     )
-acc_hist = history.history["val_mse"]
+mse_hist = history.history["val_mse"]
 loss_hist = history.history["val_loss"]
-best_epoch = acc_hist.index(max(acc_hist))
+best_epoch = mse_hist.index(min(mse_hist))
 
 print(
-    f"Validation loss, Validation mse : {loss_hist[best_epoch]:.2f} , {acc_hist[best_epoch]:.2f}%"
+    f"Validation loss, Validation mse : {loss_hist[best_epoch]:.2f} , {mse_hist[best_epoch]:.2f}, best epoch is {best_epoch}"
 )
 
 """
@@ -65,8 +65,12 @@ fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
 plt.savefig("../figures/AE_hist.pdf", bbox_inches="tight")
 plt.show()
 """
-
-
+"""
+with tf.device("/CPU:0"):
+    history = hypermodel.fit(
+        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_back_test, X_back_test)
+    )
+"""
 reconstruct = hypermodel(X_train)
 recon_error = tf.keras.losses.msle(reconstruct, X_train)
 print("Mean error: {} and std error: {}".format(np.mean(recon_error.numpy()), np.std(recon_error.numpy())))
@@ -99,9 +103,9 @@ sigma =np.nanstd(b)
 diff = abs(np.mean(b) - np.mean(s))/sigma
 x_start = np.mean(b) *5
 x_end =np.mean(s) *7
-y_start = 3 + 100
+y_start = 10 
 
-
+"""
 plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
 n, bins, patches = plt.hist(errorsback, 1000, histtype="stepfilled", density=True, facecolor="b", label="Background")
 n, bins, patches = plt.hist(errorssig, 1000, histtype="stepfilled", density=True, alpha=0.6,facecolor="r", label="signal")
@@ -118,11 +122,11 @@ plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$"
 plt.legend(fontsize = 16)
 plt.savefig("../figures/AE/AE_error1.pdf", bbox_inches="tight")
 plt.show()
-
+"""
 
 plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
-plt.hist(b, bins=300, histtype="stepfilled", facecolor="b",label = "Background", density=True)
-plt.hist(s, bins=300, histtype="stepfilled", facecolor="r",alpha=0.6, label = "Signal", density=True)
+plt.hist(b, bins=100, histtype="stepfilled", facecolor="b",label = "Background", density=True)
+plt.hist(s, bins=100, histtype="stepfilled", facecolor="r",alpha=0.6, label = "Signal", density=True)
 plt.legend(fontsize = 16)
 plt.xlabel("Error", fontsize=15)
 plt.ylabel("#-of-events", fontsize=15)
@@ -132,7 +136,7 @@ plt.annotate("", xy=(x_start,y_start),
             arrowprops={'arrowstyle': '|-|', 'lw': 1, "color":"black"}, va='center')
 plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
                 + f" = {diff:.2f}" + r"$\sigma_b$",
-                xy=(((x_start+x_end)/2), y_start+20), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
+                xy=(((x_start+x_end)/2), y_start + 5), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
 plt.savefig("../figures/AE/AE_error2.pdf", bbox_inches="tight")
 plt.show()
 
