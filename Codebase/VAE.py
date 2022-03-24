@@ -9,6 +9,7 @@ from DataHandler import DataHandler
 from tensorflow.keras import optimizers
 import keras_tuner as kt
 from Functions import timer
+import scikitplot as skplt
 
 # for custom activation function
 from keras import backend as K
@@ -122,7 +123,7 @@ def train_val_VAE(train_dataset, validation_dataset, batchsize, epochs=10, laten
     # Create batches
     optimizer = tf.keras.optimizers.Adam()
 
-    vae = VAE(latentdim, batchsize)  # .compile(optimizer=optimizer)
+    vae = VAE(latentdim, batchsize)#.compile(optimizer=optimizer)
 
     with tf.device("/CPU:0"):
         for epoch in range(epochs + 1):
@@ -160,6 +161,38 @@ def prediction(model, test_sample):
     return error
 
 
+def plot_histo(s, b, y_val):
+    sigma =np.nanstd(b)
+    diff = abs(np.mean(b) - np.mean(s))/sigma
+    x_start = np.mean(b) *5
+    x_end =np.mean(s) *7
+    y_start = 10 
+    
+    plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
+    plt.hist(b, bins=100, histtype="stepfilled", facecolor="b",label = "Background", density=True)
+    plt.hist(s, bins=100, histtype="stepfilled", facecolor="r",alpha=0.6, label = "Signal", density=True)
+    plt.legend(fontsize = 16)
+    plt.xlabel("Error", fontsize=15)
+    plt.ylabel("#-of-events", fontsize=15)
+    plt.title("Autoencoder error distribution", fontsize=15, fontweight = "bold")
+    plt.annotate("", xy=(x_start,y_start),
+                xytext=(x_end,y_start),verticalalignment="center",
+                arrowprops={'arrowstyle': '|-|', 'lw': 1, "color":"black"}, va='center')
+    plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
+                    + f" = {diff:.2f}" + r"$\sigma_b$",
+                    xy=(((x_start+x_end)/2), y_start + 5), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
+    plt.savefig("../figures/VAE/VAE_error2.pdf", bbox_inches="tight")
+    plt.show()
+
+    probas = np.concatenate((1-err_val, err_val),axis=1)
+
+    skplt.metrics.plot_roc(y_val, probas)
+    plt.xlabel("True positive rate", fontsize=15)
+    plt.ylabel("False positive rate", fontsize=15)
+    plt.title("Autoencoder: ROC curve", fontsize=15, fontweight = "bold")
+    plt.savefig("../figures/VAE/VAE_ROC.pdf", bbox_inches="tight")
+    plt.show()
+
 if __name__ == "__main__":
 
     import time
@@ -180,7 +213,7 @@ if __name__ == "__main__":
     batchsize = 4000
 
     train_dataset, validation_dataset = create_batched_data(
-        X_train, y_train, X_val, y_val, batchsize
+        X_train, y_train, X_back_test, y_val, batchsize
     )
 
     trained_model = train_val_VAE(
@@ -191,14 +224,9 @@ if __name__ == "__main__":
         latentdim=2,
     )
 
-    error_back = prediction(trained_model, X_back_test)
-    error_sig = prediction(trained_model, X_sig_test)
+    err_val = prediction(trained_model, X_val)
+   
+    s = err_val[np.where(y_val == 1)]
+    b = err_val[np.where(y_val == 0)]
 
-    n, bins, patches = plt.hist(
-        error_back, 1000, density=True, facecolor="b", label="Background"
-    )
-    n, bins, patches = plt.hist(
-        error_sig, 1000, density=True, alpha=0.6, facecolor="r", label="Signal"
-    )
-    plt.legend()
-    plt.show()
+    plot_histo(s, b, y_val)
