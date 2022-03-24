@@ -26,37 +26,57 @@ score = model.score(X_val,y_val)
 probas = model.predict_proba(X_val)
 proba = probas[:,1].ravel()
 
+
 s = proba[np.where(y_val == 1)]
 b = proba[np.where(y_val == 0)]
 
+
 sigma =np.nanstd(b)
-diff = abs(np.mean(b) - np.mean(s))/sigma
+diff = abs(np.mean(b) - np.mean(s))
 x_start = np.mean(b)
 x_end =np.mean(s)
 y_start = 3
-binsize = 100
+binsize = 200
+
 
 
 plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
-plt.hist(b, bins=binsize, histtype="stepfilled", facecolor="b",label = "Background", density=True)
-plt.hist(s, bins=binsize, histtype="stepfilled", facecolor="r",alpha=0.6, label = "Signal", density=True)
+n_b, bins_b, patches_b = plt.hist(b, bins=binsize, histtype="stepfilled", facecolor="b",
+                                     label = "Background", density=True)
+n_s, bins_s, patches_s = plt.hist(s, bins=binsize, histtype="stepfilled", facecolor="r",alpha=0.6, 
+                                     label = "Signal",  density=True)
+
+median_s = bins_s[np.where(n_s==np.max(n_s))][0]
+median_b = bins_b[np.where(n_b==np.max(n_b))][0]
+plt.axvline(x=x_start,linestyle="--", color="black",alpha = 0.6, linewidth = 1)
+plt.axvline(x=x_end,linestyle="--", color="black", alpha = 0.6, linewidth = 1)
+plt.axvline(x=median_s,linestyle="--", color="black",alpha = 0.6, linewidth = 1)
+plt.axvline(x=median_b,linestyle="--", color="black", alpha = 0.6, linewidth = 1)
 plt.xlabel("Output", fontsize=15)
-plt.ylabel("#-of-events", fontsize=15)
+plt.ylabel("#Events", fontsize=15)
 plt.title("XGBoost output distribution", fontsize=15, fontweight = "bold")
-plt.legend(fontsize = 16)
+plt.legend(fontsize = 16, loc = "upper right")
 plt.annotate("", xy=(x_start,y_start),
             xytext=(x_end,y_start),verticalalignment="center",
-            arrowprops={'arrowstyle': '|-|', 'lw': 1., "color":"black"}, va='center')
+            arrowprops={'arrowstyle': '<->', 'lw': 1., "color":"black"}, va='center')
             
 plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
-                + f" = {diff:.2f}" + r"$\sigma_b$",
+                + f" = {diff:.2f}",
                 xy=(((x_start+x_end)/2), y_start+0.5), xycoords='data',
+                fontsize=15.0,textcoords='data',ha='center')
+
+plt.annotate("", xy=(median_b,y_start*2),
+            xytext=(median_s,y_start*2),verticalalignment="center",
+            arrowprops={'arrowstyle': '<->', 'lw': 1., "color":"black"}, va='center')
+            
+plt.annotate(text=r"$\mid s_m-b_m\mid$"+f" = {abs(median_b-median_s):.2f}",
+                xy=(((median_b+median_s)/2), y_start*2+0.5), xycoords='data',
                 fontsize=15.0,textcoords='data',ha='center')
 
 plt.savefig("../figures/XGB/XGB_output.pdf", bbox_inches="tight")
 plt.show()
 
-
+exit()
 skplt.metrics.plot_roc(y_val, probas)
 plt.xlabel("True positive rate", fontsize=15)
 plt.ylabel("False positive rate", fontsize=15)
