@@ -59,9 +59,8 @@ class DataHandler:
         
         self.X_train = arr[np.all(isLess, axis=1)]
         self.y_train = self.y_train[np.all(isLess, axis=1)]
-        print(
-            f"#Events have been changed from {self.nrEvents} to {len(self.X_train)}"
-        )
+        print(f"#Events have been changed from {self.nrEvents} to {len(self.X_train)}")
+        self.nrEvents = len(self.X_train )
         
     def split(self, t_size = 0.2):
         from sklearn.model_selection import train_test_split
