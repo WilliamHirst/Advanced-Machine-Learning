@@ -4,11 +4,12 @@ import tensorflow as tf
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, train_test_split
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import PredefinedSplit
 from xgboost import XGBClassifier
 from DataHandler import DataHandler
 from tensorflow.keras import optimizers
 import keras_tuner as kt
-from sklearn.model_selection import PredefinedSplit
 from Functions import timer
 
 # for custom activation function
@@ -17,6 +18,64 @@ from keras.utils.generic_utils import get_custom_objects
 
 get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
 
+def decisionTrees():
+    import joblib
+    from joblib import dump, load
+    import os
+
+    start_time = timer(None)
+    DH.setNanToMean()
+    DH.split()
+    X_train, X_val, y_train, y_val = DH(include_test=True)
+    split_index = [-1] * len(X_train) + [0] * len(X_val)
+    X = np.concatenate((X_train, X_val), axis=0)
+    y = np.concatenate((y_train, y_val), axis=0)
+
+    model = DecisionTreeRegressor(max_features = "auto")
+
+    params = {
+        "max_depth": [7,9,11,12],
+        "min_samples_leaf":[6,7,8],
+    }
+    """params={"splitter":["best","random"],
+            "max_depth" : [7,9,11,12],
+           "min_samples_leaf":[1,2,3,4,5,6,7,8,9,10],
+           "min_weight_fraction_leaf":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9],
+           "max_features":["auto","log2","sqrt",None],
+           "max_leaf_nodes":[None,10,20,30,40,50,60,70,80,90] }"""
+
+    pds = PredefinedSplit(test_fold=split_index)
+
+    GridSearch = GridSearchCV(
+        model, param_grid=params, scoring="roc_auc", cv=pds, verbose=3
+    )
+    GridSearch.fit(X, y)
+    timer(start_time)
+    best_model = GridSearch.best_estimator_
+    best_score = np.sum(np.where(np.around(best_model.predict(X_val)) == y_val, 1, 0)) / len(X_val)
+
+    print("\n Best score:")
+    print(best_score)
+
+    print("\n Best hyperparameters:")
+    for param, value in best_model.get_params(deep=True).items():
+        print(f"{param} -> {value}")
+
+    state = True
+    while state == True:
+        answ = input("Do you want to save model? (y/n) ")
+        if answ == "y":
+            name = input("name: ")
+            dirname = os.getcwd()
+            filename = os.path.join(dirname, f"sklearn_models/model_{name}.joblib")
+            print(filename)
+            dump(best_model, filename)
+            state = False
+            print("Model saved")
+        elif answ == "n":
+            state = False
+            print("Model not saved")
+    
 
 def gridXGBoost():
     import joblib
@@ -292,9 +351,10 @@ if __name__ == "__main__":
     tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 
-    with tf.device("/CPU:0"):
+    #with tf.device("/CPU:0"):
         # gridNN()
-        gridautoencoder()
+    #    gridautoencoder()
 
     # gridXGBoost()
     # gridSVM()
+    decisionTrees()
