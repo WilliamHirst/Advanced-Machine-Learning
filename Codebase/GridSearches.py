@@ -303,6 +303,7 @@ class Encoder(tf.keras.layers.Layer):
         super(Encoder, self).__init__(name=name, **kwargs)
         self.dense_proj = tf.keras.layers.Dense(
             units=hp.Int("num_of_neurons0", min_value=20, max_value=29, step=1),
+            input_shape=(30,),
             activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
         )
         self.dense_proj1 = tf.keras.layers.Dense(
@@ -313,7 +314,7 @@ class Encoder(tf.keras.layers.Layer):
             units=hp.Int("num_of_neurons2", min_value=7, max_value=12, step=1),
             activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"]),
         )
-        latent_dim = hp.Int("num_of_neurons3", min_value=1, max_value=6, step=1)
+        latent_dim = hp.Int("num_of_neurons3", min_value=2, max_value=6, step=1)
         self.dense_mean = tf.keras.layers.Dense(units=latent_dim)
         self.dense_log_var = tf.keras.layers.Dense(
             units=latent_dim,
@@ -347,7 +348,7 @@ class Decoder(tf.keras.layers.Layer):
             activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
         )
         self.dense_output = tf.keras.layers.Dense(
-            30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu, sigmoid"])
+            units=30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
         )
 
     def call(self, inputs):
