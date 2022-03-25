@@ -47,7 +47,7 @@ class VAE(tf.keras.Model):
     @tf.function
     def sampling(self, epsilon=None):
         if epsilon is None:
-            epsilon = tf.random.normal(shape=(100, self.latent_dim))
+            epsilon = tf.random.normal(shape=self.epsdim)
         return self.decode(epsilon, apply_sigmoid=True)
 
     def encode(self, x):
@@ -56,6 +56,7 @@ class VAE(tf.keras.Model):
 
     def reparameterize(self, mean, logvariance):
         epsilon = tf.random.normal(shape=(mean.shape))
+        self.epsdim = epsilon.shape
         return epsilon * tf.exp(logvariance * 0.5) + mean
 
     def decode(self, z, apply_sigmoid=False):
@@ -68,9 +69,9 @@ class VAE(tf.keras.Model):
 
 def log_normal_pdf(sample, mean, logvariance, raxis=1):
     log2pi = tf.math.log(2.0 * np.pi)
-    val = -0.5 * ((sample - mean) ** 2.0 * tf.exp(-logvariance) + logvariance + log2pi)
+    val =  -(sample - mean) ** 2.0  -tf.exp(logvariance) + logvariance + log2pi
 
-    return tf.reduce_sum(
+    return -0.5 *tf.reduce_sum(
         val,
         axis=raxis,
     )
