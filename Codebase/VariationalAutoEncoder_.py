@@ -16,6 +16,66 @@ from keras.utils.generic_utils import get_custom_objects
 get_custom_objects().update(
     {"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
 
+class Sampling(tf.keras.layers.Layer):
+
+    def call(self, inputs):
+        z_mean, z_log_var = inputs 
+        batch = tf.shape(z_mean)[0]
+        dim = tf.shape(z_mean)[1]
+        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+        return z_mean + tf.exp(0.5 * z_log_var)*epsilon
+
+
+class Encoder(tf.keras.layers.Layer):
+
+    def __init__(self, name="encoder", **kwargs):
+        super(Encoder, self).__init__(name=name, **kwargs)
+        self.dense_proj = tf.keras.layers.Dense(21, activation="leakyrelu")
+        self.dense_proj1 = tf.keras.layers.Dense(15, activation="tanh")
+        self.dense_proj2 = tf.keras.layers.Dense(8, activation="leakyrelu")
+        self.dense_mean = tf.keras.layers.Dense(4)
+        self.dense_log_var = tf.keras.layers.Dense(4, activation="tanh")
+        self.sampling = Sampling()
+
+    def call(self, inputs):
+        x = self.dense_proj(inputs)
+        x1 = self.dense_proj1(x)
+        x2 = self.dense_proj2(x1)
+        z_mean = self.dense_mean(x2)
+        z_log_var = self.dense_log_var(x2)
+        z = self.sampling((z_mean, z_log_var))
+        return z_mean, z_log_var, z 
+    
+class Decoder(tf.keras.layers.Layer):
+    def __init__(self, name="decoder", **kwargs):
+        super(Decoder, self).__init__(name=name, **kwargs)
+        self.dense_proj = tf.keras.layers.Dense(9, activation="relu")
+        self.dense_proj1 = tf.keras.layers.Dense(15, activation="leakyrelu")
+        self.dense_proj2 = tf.keras.layers.Dense(20, activation="tanh")
+        self.dense_output = tf.keras.layers.Dense(30, activation="leakyrelu")
+
+    def call(self, inputs):
+        x = self.dense_proj(inputs)
+        x1 = self.dense_proj1(x)
+        x2 = self.dense_proj2(x1)
+        return self.dense_output(x2)
+
+class VAE(tf.keras.Model):
+    def __init__(self, name="vae", **kwargs):
+        super(VAE, self).__init__(name=name, **kwargs)
+        self.encoder = Encoder()
+        self.decoder = Decoder()
+
+    def call(self, inputs):
+        z_mean, z_log_var, z = self.encoder(inputs)
+        reconstruction = self.decoder(z)
+
+        #KL divergence
+        kl_loss = -0.5*tf.reduce_mean(z_log_var - tf.square(z_mean) - tf.exp(z_log_var)+1)
+        self.add_loss(kl_loss)
+        return reconstruction
+
+
 print("Preparing data...")
 tf.random.set_seed(1)
 X_test = np.load("../Data/featuresTest.npy")
@@ -43,54 +103,16 @@ X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(
 
 # Get optimal model through previous gridsearch
 print("Fetching optimal parameters...")
-name = "hypermodel_vae"
-hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
-"""
-# Train to find best epoch
-print("Training model.")
-with tf.device("/CPU:0"):
-    history = hypermodel.fit(
-        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_back_test, X_back_test)
-    )
-mse_hist = history.history["val_mse"]
-loss_hist = history.history["val_loss"]
-best_epoch = mse_hist.index(min(mse_hist))
 
-print(
-    f"Validation loss, Validation mse : {loss_hist[best_epoch]:.2f} , {mse_hist[best_epoch]:.2f}, best epoch is {best_epoch}"
-)
-"""
-"""
-fig, ax1 = plt.subplots(num=0, dpi=80, facecolor="w", edgecolor="k")
-fig.suptitle("Autoencoder history", fontsize=16)
-color = plt.rcParams["axes.prop_cycle"].by_key()["color"][0]
-ax1.set_xlabel(r"#$Epochs$", fontsize=16)
-ax1.set_ylabel(r"$mse$", fontsize=16, color=color)
-ax1.plot(history.history["val_mse"], color=color)
-ax1.tick_params(axis="y", labelcolor=color)
 
-ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-color = plt.rcParams["axes.prop_cycle"].by_key()["color"][1]
-ax2.set_ylabel(
-    r"$Loss$", color=color, fontsize=16
-)  # we already handled the x-label with ax1
-ax2.plot(history.history["val_loss"], color=color)
-ax2.tick_params(axis="y", labelcolor=color)
+#vae = create_train_model(train_dataset, epochs=10)
+hypermodel = VAE()
 
-fig.tight_layout(pad=1.1, w_pad=0.7, h_pad=0.2)
-plt.savefig("../figures/AE_hist.pdf", bbox_inches="tight")
-plt.show()
-"""
-"""
-with tf.device("/CPU:0"):
-    history = hypermodel.fit(
-        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_back_test, X_back_test)
-    )
-"""
-with tf.device("/CPU:0"):
-    hypermodel.fit(
-        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_back_test, X_back_test)
-    )
+optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+hypermodel.compile(optimizer, loss = tf.keras.losses.MeanSquaredError())
+hypermodel.fit(X_train, X_train, epochs=20, validation_data=(X_back_test, X_back_test))
+
+
 
 
 recon_val = hypermodel(X_val)
