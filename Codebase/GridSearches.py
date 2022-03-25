@@ -11,6 +11,7 @@ import keras_tuner as kt
 from sklearn.model_selection import PredefinedSplit
 from Functions import timer
 
+
 # for custom activation function
 from keras import backend as K
 from keras.utils.generic_utils import get_custom_objects
@@ -199,7 +200,7 @@ def gridSVM():
 
 
 def gridautoencoder():
-    DH.setNanToMean()#DH.fillWithImputer()
+    DH.setNanToMean()  # DH.fillWithImputer()
     DH.standardScale()
     X_b, y_b, X_all, y_all, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
 
@@ -233,7 +234,7 @@ def gridautoencoder():
     \n
     with learning rate = {best_hps.get('learning_rate')}
     """
-    )  
+    )
 
     state = True
     while state == True:
@@ -288,13 +289,161 @@ def AE_model_builder(hp):
     return AE_model
 
 
+class Sampling(tf.keras.layers.Layer):
+    def call(self, inputs):
+        z_mean, z_log_var = inputs
+        batch = tf.shape(z_mean)[0]
+        dim = tf.shape(z_mean)[1]
+        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+
+
+class Encoder(tf.keras.layers.Layer):
+    def __init__(self, hp, name="encoder", **kwargs):
+        super(Encoder, self).__init__(name=name, **kwargs)
+        self.dense_proj = tf.keras.layers.Dense(
+            units=hp.Int("num_of_neurons0", min_value=20, max_value=29, step=1),
+            activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
+        )
+        self.dense_proj1 = tf.keras.layers.Dense(
+            units=hp.Int("num_of_neurons1", min_value=13, max_value=19, step=1),
+            activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
+        )
+        self.dense_proj2 = tf.keras.layers.Dense(
+            units=hp.Int("num_of_neurons2", min_value=7, max_value=12, step=1),
+            activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"]),
+        )
+        latent_dim = hp.Int("num_of_neurons3", min_value=1, max_value=6, step=1)
+        self.dense_mean = tf.keras.layers.Dense(units=latent_dim)
+        self.dense_log_var = tf.keras.layers.Dense(
+            units=latent_dim,
+            activation=hp.Choice("3_act", ["relu", "tanh", "leakyrelu"]),
+        )
+        self.sampling = Sampling()
+
+    def call(self, inputs):
+        x = self.dense_proj(inputs)
+        x1 = self.dense_proj1(x)
+        x2 = self.dense_proj2(x1)
+        z_mean = self.dense_mean(x2)
+        z_log_var = self.dense_log_var(x2)
+        z = self.sampling((z_mean, z_log_var))
+        return z_mean, z_log_var, z
+
+
+class Decoder(tf.keras.layers.Layer):
+    def __init__(self, hp, name="decoder", **kwargs):
+        super(Decoder, self).__init__(name=name, **kwargs)
+        self.dense_proj = tf.keras.layers.Dense(
+            units=hp.Int("num_of_neurons4", min_value=7, max_value=12, step=1),
+            activation=hp.Choice("4_act", ["relu", "tanh", "leakyrelu"]),
+        )
+        self.dense_proj1 = tf.keras.layers.Dense(
+            units=hp.Int("num_of_neurons5", min_value=13, max_value=19, step=1),
+            activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
+        )
+        self.dense_proj2 = tf.keras.layers.Dense(
+            units=hp.Int("num_of_neurons6", min_value=20, max_value=29, step=1),
+            activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
+        )
+        self.dense_output = tf.keras.layers.Dense(
+            30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu, sigmoid"])
+        )
+
+    def call(self, inputs):
+        x = self.dense_proj(inputs)
+        x1 = self.dense_proj1(x)
+        x2 = self.dense_proj2(x1)
+        return self.dense_output(x2)
+
+
+class VAE(tf.keras.Model):
+    def __init__(self, hp, name="vae", **kwargs):
+        super(VAE, self).__init__(name=name, **kwargs)
+        self.encoder = Encoder(hp)
+        self.decoder = Decoder(hp)
+
+    def call(self, inputs):
+        z_mean, z_log_var, z = self.encoder(inputs)
+        reconstruction = self.decoder(z)
+
+        # KL divergence
+        kl_loss = -0.5 * tf.reduce_mean(
+            z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1
+        )
+        self.add_loss(kl_loss)
+        return reconstruction
+
+
+def VAE_model_builder(hp):
+
+    VAE_model = VAE(hp)
+    hp_learning_rate = hp.Choice("learning_rate", values=[9e-2, 9.5e-2, 1e-3, 1.5e-3])
+    optimizer = optimizers.Adam(hp_learning_rate)
+    VAE_model.compile(loss="mse", optimizer=optimizer, metrics=["mse"])
+
+    return VAE_model
+
+
+def gridvae():
+    DH.setNanToMean()  # DH.fillWithImputer()
+    DH.standardScale()
+    X_b, y_b, X_all, y_all, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
+
+    start_time = timer(None)
+    tuner = kt.Hyperband(
+        VAE_model_builder,
+        objective=kt.Objective("val_mse", direction="min"),
+        max_epochs=50,
+        factor=3,
+        directory="GridSearches",
+        project_name="VAE",
+        overwrite=True,
+    )
+
+    tuner.search(X_b, X_b, epochs=50, validation_data=(X_back_test, X_back_test))
+    timer(start_time)
+    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+
+    print(
+        f"""
+    For Encoder: \n 
+    First layer has {best_hps.get('num_of_neurons0')} with activation {best_hps.get('0_act')} \n
+    Second layer has {best_hps.get('num_of_neurons1')} with activation {best_hps.get('1_act')} \n
+    Third layer has {best_hps.get('num_of_neurons2')} with activation {best_hps.get('2_act')} \n
+    Latent layer has {best_hps.get("num_of_neurons3")} with activation {best_hps.get('3_act')} \n
+    \n
+    For Decoder: \n 
+    First layer has {best_hps.get('num_of_neurons4')} with activation {best_hps.get('4_act')}\n
+    Second layer has {best_hps.get('num_of_neurons5')} with activation {best_hps.get('5_act')}\n
+    Third layer has {best_hps.get('num_of_neurons6')} with activation {best_hps.get('6_act')}\n
+    Final output has activation {best_hps.get("7_act")}\n
+    \n
+    with learning rate = {best_hps.get('learning_rate')}
+    """
+    )
+
+    state = True
+    while state == True:
+        answ = input("Do you want to save model? (y/n) ")
+        if answ == "y":
+            name = input("name: ")
+            tuner.hypermodel.build(best_hps).save(f"../tf_models/model_{name}.h5")
+            state = False
+            print("Model saved")
+        elif answ == "n":
+            state = False
+            print("Model not saved")
+
+
 if __name__ == "__main__":
     tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 
     with tf.device("/CPU:0"):
         # gridNN()
-        gridautoencoder()
+        #gridautoencoder()
+        gridvae()
 
     # gridXGBoost()
     # gridSVM()
