@@ -91,6 +91,7 @@ def compute_loss(model, x):
     return loss
 
 
+
 @tf.function
 def train_step(model, x, optimizer):
     with tf.GradientTape() as tape:
@@ -121,11 +122,6 @@ def create_batched_data(X_train, y_train, X_val, y_val, batch_size):
 def train_val_VAE(train_dataset, validation_dataset, batchsize, epochs=10, latentdim=5):
 
     # Create batches
-
-    epochs = epochs
-    latentdim = latentdim
-    batchsize = batchsize
-
     optimizer = tf.keras.optimizers.Adam()
 
     vae = VAE(latentdim, batchsize)#.compile(optimizer=optimizer)
@@ -145,9 +141,9 @@ def train_val_VAE(train_dataset, validation_dataset, batchsize, epochs=10, laten
             for val_x in validation_dataset:
                 loss(compute_loss(vae, val_x))
 
-            elbo = -loss.result()
+            elbo = -loss.result() 
             print(
-                "Epoch: {}, Test set ELBO: {}, time elapse for current epoch: {}".format(
+                "Epoch: {}, Test set ELBO: {:.2e}, time elapse for current epoch: {:.2e}s".format(
                     epoch, elbo, end_time - start_time
                 )
             )
