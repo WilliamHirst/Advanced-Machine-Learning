@@ -356,91 +356,82 @@ class Sampling(tf.keras.layers.Layer):
         epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
+def VAE(hp):
+    
+    # Define encoder model
+    original_inputs = tf.keras.Input(
+        shape=(30,), name="encoder_input")
+    x = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons0", min_value=20, max_value=29, step=1),
+        activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
+    )(original_inputs)
+    x1 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons1", min_value=13,
+                     max_value=19, step=1),
+        activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
+    )(x)
+    x2 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons2", min_value=7, max_value=12, step=1),
+        activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"]),
+    )(x1)
+    latent_dim = hp.Int("num_of_neurons3", min_value=2,
+                        max_value=6, step=1)
+    z_mean = tf.keras.layers.Dense(units=latent_dim)(x2)
+    z_log_var = tf.keras.layers.Dense(
+        units=latent_dim,
+        activation=hp.Choice("3_act", ["relu", "tanh", "leakyrelu"]),
+    )(x2)
+    
+    
+    batch = tf.shape(z_mean)[0]
+    dim = tf.shape(z_mean)[1]
+    epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+    z = z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
-class Encoder(tf.keras.layers.Layer):
-    def __init__(self, hp, name="encoder", **kwargs):
-        super(Encoder, self).__init__(name=name, **kwargs)
-        self.dense_proj = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons0", min_value=20, max_value=29, step=1),
-            input_shape=(30,),
-            activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj1 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons1", min_value=13, max_value=19, step=1),
-            activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj2 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons2", min_value=7, max_value=12, step=1),
-            activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        latent_dim = hp.Int("num_of_neurons3", min_value=2, max_value=6, step=1)
-        self.dense_mean = tf.keras.layers.Dense(units=latent_dim)
-        self.dense_log_var = tf.keras.layers.Dense(
-            units=latent_dim,
-            activation=hp.Choice("3_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.sampling = Sampling()
+    encoder = tf.keras.Model(inputs=original_inputs, outputs=z, name="encoder")
 
-    def call(self, inputs):
-        x = self.dense_proj(inputs)
-        x1 = self.dense_proj1(x)
-        x2 = self.dense_proj2(x1)
-        z_mean = self.dense_mean(x2)
-        z_log_var = self.dense_log_var(x2)
-        z = self.sampling((z_mean, z_log_var))
-        return z_mean, z_log_var, z
-
-
-class Decoder(tf.keras.layers.Layer):
-    def __init__(self, hp, name="decoder", **kwargs):
-        super(Decoder, self).__init__(name=name, **kwargs)
-        self.dense_proj = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons4", min_value=7, max_value=12, step=1),
-            activation=hp.Choice("4_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj1 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons5", min_value=13, max_value=19, step=1),
-            activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj2 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons6", min_value=20, max_value=29, step=1),
-            activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_output = tf.keras.layers.Dense(
-            units=30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
-        )
-
-    def call(self, inputs):
-        x = self.dense_proj(inputs)
-        x1 = self.dense_proj1(x)
-        x2 = self.dense_proj2(x1)
-        return self.dense_output(x2)
+    # Define decoder model.
+    latent_inputs = tf.keras.Input(shape=(latent_dim,), name="z_sampling")
+    x3 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons4", min_value=7, max_value=12, step=1),
+        activation=hp.Choice("4_act", ["relu", "tanh", "leakyrelu"]),
+    )(latent_inputs)
+    x4 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons5", min_value=13,
+                     max_value=19, step=1),
+        activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
+    )(x3)
+    x5 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons6", min_value=20,
+                     max_value=29, step=1),
+        activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
+    )(x4)
+    dense_output = tf.keras.layers.Dense(
+        units=30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
+    )(x5)
+    
+    decoder=tf.keras.Model(inputs=latent_inputs,
+                            outputs=dense_output, name="decoder")
+    
+    # Define VAE model.
+    outputs = decoder(z)
+    vae = tf.keras.Model(inputs=original_inputs, outputs=outputs, name="vae")
+    
+    kl_loss = -0.5 * \
+        tf.reduce_mean(z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1)
 
 
-class VAE(tf.keras.Model):
-    def __init__(self, hp, name="vae", **kwargs):
-        super(VAE, self).__init__(name=name, **kwargs)
-        self.encoder = Encoder(hp)
-        self.decoder = Decoder(hp)
-
-    def call(self, inputs):
-        z_mean, z_log_var, z = self.encoder(inputs)
-        reconstruction = self.decoder(z)
-
-        # KL divergence
-        kl_loss = -0.5 * tf.reduce_mean(
-            z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1
-        )
-        self.add_loss(kl_loss)
-        return reconstruction
-
+    vae.add_loss(kl_loss)
+    
+    return vae
+    
 
 def VAE_model_builder(hp):
 
     VAE_model = VAE(hp)
     hp_learning_rate = hp.Choice("learning_rate", values=[9e-2, 9.5e-2, 1e-3, 1.5e-3])
     optimizer = optimizers.Adam(hp_learning_rate)
-    VAE_model.compile(loss="mse", optimizer=optimizer, metrics=["mse"])
+    VAE_model.compile(loss="mse", optimizer=optimizer ,metrics=["mse"])
 
     return VAE_model
 
@@ -461,7 +452,7 @@ def gridvae():
         overwrite=True,
     )
 
-    tuner.search(X_b, X_b, epochs=50, validation_data=(X_back_test, X_back_test))
+    tuner.search(X_b, X_b, epochs=50, batch_size=4000, validation_data=(X_back_test, X_back_test))
     timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
@@ -500,10 +491,10 @@ if __name__ == "__main__":
     tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 
-    #with tf.device("/CPU:0"):
+    with tf.device("/CPU:0"):
         # gridNN()
-    #    gridautoencoder()
-
+        #gridautoencoder()
+        gridvae()
     # gridXGBoost()
     # gridSVM()
-    decisionTrees()
+    #decisionTrees()

@@ -32,16 +32,21 @@ class Encoder(tf.keras.layers.Layer):
 
     def __init__(self, latent_dim=5, intermediate_dim=20, name="encoder", **kwargs):
         super(Encoder, self).__init__(name=name, **kwargs)
-        self.dense_proj = tf.keras.layers.Dense(intermediate_dim, activation="relu")
-        self.dense_proj1 = tf.keras.layers.Dense(intermediate_dim-5, activation="relu")
-        self.dense_proj2 = tf.keras.layers.Dense(intermediate_dim-10, activation="relu")
-        self.dense_mean = tf.keras.layers.Dense(latent_dim)
-        self.dense_log_var = tf.keras.layers.Dense(latent_dim, activation="relu")
+        self.dense_proj = tf.keras.layers.Dense(24, activation="relu")
+        self.dense_proj1 = tf.keras.layers.Dense(18, activation="tanh")
+        self.dense_proj2 = tf.keras.layers.Dense(12, activation="relu")
+        self.dense_mean = tf.keras.layers.Dense(6)
+        self.dense_log_var = tf.keras.layers.Dense(6, activation="leakyrelu")
+        self.dropout = tf.keras.layers.Dropout(0.01)
+        self.reg = tf.keras.layers.ActivityRegularization(
+            l1=0.1, l2=0.05)
         self.sampling = Sampling()
 
     def call(self, inputs):
         x = self.dense_proj(inputs)
-        x1 = self.dense_proj1(x)
+        #act = self.dropout(x)
+        act = self.reg(x)
+        x1 = self.dense_proj1(act)
         x2 = self.dense_proj2(x1)
         z_mean = self.dense_mean(x2)
         z_log_var = self.dense_log_var(x2)
@@ -51,10 +56,10 @@ class Encoder(tf.keras.layers.Layer):
 class Decoder(tf.keras.layers.Layer):
     def __init__(self, orig_dim, intermediate_dim=20, name="decoder", **kwargs):
         super(Decoder, self).__init__(name=name, **kwargs)
-        self.dense_proj = tf.keras.layers.Dense(intermediate_dim-10, activation="relu")
-        self.dense_proj1 = tf.keras.layers.Dense(intermediate_dim-5, activation="relu")
-        self.dense_proj2 = tf.keras.layers.Dense(intermediate_dim, activation="relu")
-        self.dense_output = tf.keras.layers.Dense(orig_dim, activation="sigmoid")
+        self.dense_proj = tf.keras.layers.Dense(9, activation="relu")
+        self.dense_proj1 = tf.keras.layers.Dense(15, activation="relu")
+        self.dense_proj2 = tf.keras.layers.Dense(20, activation="leakyrelu")
+        self.dense_output = tf.keras.layers.Dense(orig_dim, activation="leakyrelu")
 
     def call(self, inputs):
         x = self.dense_proj(inputs)
@@ -134,9 +139,9 @@ def create_batched_data(X_train, y_train, X_val, y_val, batch_size):
 def plot_histo(s, b, y_val):
     sigma =np.nanstd(b)
     diff = abs(np.mean(b) - np.mean(s))/sigma
-    x_start = np.mean(b) *5
-    x_end =np.mean(s) *7
-    y_start = 10 
+    x_start = np.mean(b) *3
+    x_end =np.mean(s) *6
+    y_start = 5
     
     plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
     plt.hist(b, bins=100, histtype="stepfilled", facecolor="b",label = "Background", density=True)
@@ -144,13 +149,11 @@ def plot_histo(s, b, y_val):
     plt.legend(fontsize = 16)
     plt.xlabel("Error", fontsize=15)
     plt.ylabel("#-of-events", fontsize=15)
-    plt.title("Autoencoder error distribution", fontsize=15, fontweight = "bold")
-    plt.annotate("", xy=(x_start,y_start),
-                xytext=(x_end,y_start),verticalalignment="center",
-                arrowprops={'arrowstyle': '|-|', 'lw': 1, "color":"black"}, va='center')
+    plt.title("Variational Autoencoder error distribution", fontsize=15, fontweight = "bold")
+    
     plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
                     + f" = {diff:.2f}" + r"$\sigma_b$",
-                    xy=(((x_start+x_end)/2), y_start + 5), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
+                    xy=(((x_start+x_end)/2), y_start ), xycoords='data',fontsize=15.0,textcoords='data',ha='center')
     plt.savefig("../figures/VAE/VAE_error2.pdf", bbox_inches="tight")
     plt.show()
 
@@ -159,7 +162,7 @@ def plot_histo(s, b, y_val):
     skplt.metrics.plot_roc(y_val, probas)
     plt.xlabel("True positive rate", fontsize=15)
     plt.ylabel("False positive rate", fontsize=15)
-    plt.title("Autoencoder: ROC curve", fontsize=15, fontweight = "bold")
+    plt.title("Variational Autoencoder: ROC curve", fontsize=15, fontweight = "bold")
     plt.savefig("../figures/VAE/VAE_ROC.pdf", bbox_inches="tight")
     plt.show()
 
@@ -182,7 +185,7 @@ if __name__ == "__main__":
     DH.setNanToMean()  # DH.fillWithImputer()
     DH.standardScale()
 
-    batchsize=4000
+    batchsize=8000
 
     X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(
         whole_split=True
@@ -195,13 +198,15 @@ if __name__ == "__main__":
     
 
     #vae = create_train_model(train_dataset, epochs=10)
-    vae = VAE(orig_dim=30, intermediate_dim=20, latent_dim=5)
+    with tf.device("/CPU:0"):
+        vae = VAE(orig_dim=30, intermediate_dim=20, latent_dim=5)
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-    vae.compile(optimizer, loss = tf.keras.losses.MeanSquaredError())
-    vae.fit(X_train, X_train, epochs=20, validation_data=(X_back_test, X_back_test))
+        optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+        vae.compile(optimizer, loss = tf.keras.losses.MeanSquaredError())
+        
+        vae.fit(X_train, X_train, epochs=100, batch_size=batchsize, validation_data=(X_back_test, X_back_test))
 
-    err_val = prediction(vae, X_val)
+        err_val = prediction(vae, X_val)
    
     s = err_val[np.where(y_val == 1)]
     b = err_val[np.where(y_val == 0)]
