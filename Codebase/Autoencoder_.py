@@ -44,7 +44,7 @@ print("Fetching optimal parameters...")
 name = "hypermodel_ae"
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 tf.keras.utils.plot_model(hypermodel, to_file="../figures/AE/model_plot.png", show_shapes=True, show_layer_names=True, expand_nested=True)
-exit()
+
 """
 # Train to find best epoch
 print("Training model.")
