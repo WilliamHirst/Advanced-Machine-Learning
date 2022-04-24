@@ -43,7 +43,7 @@ X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(whole_split
 print("Fetching optimal parameters...")
 name = "hypermodel_ae"
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
-tf.keras.utils.plot_model(hypermodel, to_file="../figures/AE/model_plot.png", show_shapes=True, show_layer_names=True, expand_nested=True)
+tf.keras.utils.plot_model(hypermodel, to_file="../figures/AE/ae_model_plot.png", show_shapes=True, show_layer_names=True, expand_nested=True)
 
 """
 # Train to find best epoch
