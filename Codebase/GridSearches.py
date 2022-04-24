@@ -17,7 +17,7 @@ from Functions import timer
 from keras import backend as K
 from keras.utils.generic_utils import get_custom_objects
 
-get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
+get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.1)})
 
 def decisionTrees():
     import joblib
@@ -274,7 +274,7 @@ def gridautoencoder():
         overwrite=True,
     )
 
-    tuner.search(X_b, X_b, epochs=100, validation_data=(X_back_test, X_back_test))
+    tuner.search(X_b, X_b, epochs=50, batch_size=4000, validation_data=(X_back_test, X_back_test))
     timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
@@ -365,27 +365,32 @@ def VAE(hp):
         units=hp.Int("num_of_neurons0", min_value=20, max_value=29, step=1),
         activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
     )(original_inputs)
+    
+    drop = tf.keras.layers.Dropout(0.01)(x)
+    
     x1 = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons1", min_value=13,
                      max_value=19, step=1),
         activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
-    )(x)
+    )(drop)
     x2 = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons2", min_value=7, max_value=12, step=1),
         activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"]),
     )(x1)
     latent_dim = hp.Int("num_of_neurons3", min_value=2,
                         max_value=6, step=1)
+    
     z_mean = tf.keras.layers.Dense(units=latent_dim)(x2)
+    
     z_log_var = tf.keras.layers.Dense(
         units=latent_dim,
-        activation=hp.Choice("3_act", ["relu", "tanh", "leakyrelu"]),
-    )(x2)
+        
+    )(x2)  # activation=hp.Choice("3_act", ["relu", "tanh", "leakyrelu"]),
     
     
     batch = tf.shape(z_mean)[0]
     dim = tf.shape(z_mean)[1]
-    epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+    epsilon = tf.random.normal(shape=(batch, dim), seed=seed)
     z = z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
     encoder = tf.keras.Model(inputs=original_inputs, outputs=z, name="encoder")
@@ -436,6 +441,7 @@ def VAE_model_builder(hp):
     return VAE_model
 
 
+
 def gridvae():
     DH.setNanToMean()  # DH.fillWithImputer()
     DH.standardScale()
@@ -445,14 +451,14 @@ def gridvae():
     tuner = kt.Hyperband(
         VAE_model_builder,
         objective=kt.Objective("val_mse", direction="min"),
-        max_epochs=50,
+        max_epochs=200,
         factor=3,
         directory="GridSearches",
         project_name="VAE",
         overwrite=True,
     )
 
-    tuner.search(X_b, X_b, epochs=50, batch_size=4000, validation_data=(X_back_test, X_back_test))
+    tuner.search(X_b, X_b, epochs=200, batch_size=4000, validation_data=(X_back_test, X_back_test))
     timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
@@ -462,7 +468,7 @@ def gridvae():
     First layer has {best_hps.get('num_of_neurons0')} with activation {best_hps.get('0_act')} \n
     Second layer has {best_hps.get('num_of_neurons1')} with activation {best_hps.get('1_act')} \n
     Third layer has {best_hps.get('num_of_neurons2')} with activation {best_hps.get('2_act')} \n
-    Latent layer has {best_hps.get("num_of_neurons3")} with activation {best_hps.get('3_act')} \n
+    Latent layer has {best_hps.get("num_of_neurons3")}  \n
     \n
     For Decoder: \n 
     First layer has {best_hps.get('num_of_neurons4')} with activation {best_hps.get('4_act')}\n
@@ -472,7 +478,7 @@ def gridvae():
     \n
     with learning rate = {best_hps.get('learning_rate')}
     """
-    )
+    )  # with activation {best_hps.get('3_act')}
 
     state = True
     while state == True:
@@ -488,13 +494,13 @@ def gridvae():
 
 
 if __name__ == "__main__":
-    tf.random.set_seed(1)
+    seed = tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 
     with tf.device("/CPU:0"):
         # gridNN()
-        #gridautoencoder()
-        gridvae()
+        gridautoencoder()
+        #gridvae()
     # gridXGBoost()
     # gridSVM()
     #decisionTrees()

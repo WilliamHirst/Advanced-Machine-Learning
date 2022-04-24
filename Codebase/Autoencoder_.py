@@ -43,6 +43,8 @@ X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(whole_split
 print("Fetching optimal parameters...")
 name = "hypermodel_ae"
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
+tf.keras.utils.plot_model(hypermodel, to_file="../figures/AE/model_plot.png", show_shapes=True, show_layer_names=True, expand_nested=True)
+exit()
 """
 # Train to find best epoch
 print("Training model.")
@@ -87,7 +89,7 @@ with tf.device("/CPU:0"):
 """
 with tf.device("/CPU:0"):
     hypermodel.fit(
-        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_back_test, X_back_test)
+        X_train, X_train, epochs=200, batch_size=4000, validation_data=(X_back_test, X_back_test)
     )
 
 

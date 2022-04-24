@@ -50,14 +50,17 @@ hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 #vae = create_train_model(train_dataset, epochs=10)
 
 
-optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-hypermodel.compile(optimizer, loss = tf.keras.losses.MeanSquaredError())
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+hypermodel.compile(optimizer, loss="mse", metrics=["mse"])
 with tf.device("/CPU:0"):
-    hypermodel.fit(X_train, X_train, epochs=20, batch_size=4000, validation_data=(X_back_test, X_back_test))
+    hypermodel.fit(X_train, X_train, epochs=139, batch_size=4000, validation_data=(X_back_test, X_back_test))
 
     recon_val = hypermodel(X_val)
     
-err_val = tf.keras.losses.msle(recon_val, X_val).numpy()
+
+# tf.keras.losses.msle(recon_val, X_val).numpy()
+err_val = tf.keras.losses.mse(recon_val, X_val).numpy()
+
 err_val = err_val.reshape(len(err_val), 1)
 #indx = np.where(err_val<np.mean(err_val)+5*np.std(err_val))[0] #Remove outliers in reconstruction.
 indx = np.where(err_val > -1)[0]
@@ -73,7 +76,7 @@ sigma = np.nanstd(b)
 diff = abs(np.mean(b) - np.mean(s))
 x_start = np.mean(b)
 x_end = np.mean(s)
-y_start = 8
+y_start = 3
 
 
 threshold = np.mean(b) + np.std(b)
@@ -97,13 +100,10 @@ median_b = bins_b[np.where(n_b == np.max(n_b))][0]
 #plt.axvline(x=median_b,linestyle="--", color="black", alpha = 0.6, linewidth = 1)
 plt.xlabel("Output", fontsize=15)
 plt.ylabel("#Events", fontsize=15)
-plt.title("Autoencoder output distribution", fontsize=15, fontweight="bold")
+plt.title("Variational Autoencoder output distribution", fontsize=15, fontweight="bold")
 plt.legend(fontsize=16, loc="upper right")
 
-plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$"
-             + f" = {diff:.3f}",
-             xy=((0.5), y_start+1.), xycoords='data',
-             fontsize=15.0, textcoords='data', ha='center')
+
 
 plt.annotate(r"$\mid s_m-b_m\mid$"+f" = {abs(median_b-median_s):.3f}", xycoords='data',
              xy=(0.5, y_start+4.),
