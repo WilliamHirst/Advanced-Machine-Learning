@@ -35,6 +35,7 @@ epochs = 50
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 tf.keras.utils.plot_model(hypermodel, to_file="../figures/Neural_network/model_plot.png", show_shapes=True, show_layer_names=True, expand_nested=True)
 
+
 # Train to find best epoch
 print("Training model.")
 
