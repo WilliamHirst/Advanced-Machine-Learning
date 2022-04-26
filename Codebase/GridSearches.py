@@ -13,11 +13,17 @@ import keras_tuner as kt
 from Functions import timer
 
 
+
 # for custom activation function
 from keras import backend as K
 from keras.utils.generic_utils import get_custom_objects
 
+
+
+
 get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
+get_custom_objects().update({"self_val": tf.keras.layers.LeakyReLU(alpha=1.0)})
+
 
 def decisionTrees():
     import joblib
@@ -262,6 +268,7 @@ def gridautoencoder():
     DH.setNanToMean()  # DH.fillWithImputer()
     DH.standardScale()
     X_b, y_b, X_all, y_all, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
+    
 
     start_time = timer(None)
     tuner = kt.Hyperband(
@@ -274,7 +281,7 @@ def gridautoencoder():
         overwrite=True,
     )
 
-    tuner.search(X_b, X_b, epochs=100, validation_data=(X_back_test, X_back_test))
+    tuner.search(X_b, X_b, epochs=50, batch_size=4000, validation_data=(X_back_test, X_back_test))
     timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
@@ -312,29 +319,29 @@ def AE_model_builder(hp):
     inputs = tf.keras.layers.Input(shape=30, name="encoder_input")
     x = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons0", min_value=17, max_value=30, step=1),
-        activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(inputs)
     x1 = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons1", min_value=9, max_value=16, step=1),
-        activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(x)
     val = hp.Int("lat_num", min_value=1, max_value=8, step=1)
     x2 = tf.keras.layers.Dense(
-        units=val, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"])
+        units=val, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu", "self_val"])
     )(x1)
     encoder = tf.keras.Model(inputs, x2, name="encoder")
 
     latent_input = tf.keras.layers.Input(shape=val, name="decoder_input")
     x = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons5", min_value=9, max_value=16, step=1),
-        activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(latent_input)
     x1 = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons6", min_value=17, max_value=30, step=1),
-        activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(x)
     output = tf.keras.layers.Dense(
-        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
+        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid", "self_val"])
     )(x1)
     decoder = tf.keras.Model(latent_input, output, name="decoder")
 
@@ -356,93 +363,90 @@ class Sampling(tf.keras.layers.Layer):
         epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
+def VAE(hp):
+    
+    # Define encoder model
+    original_inputs = tf.keras.Input(
+        shape=(30,), name="encoder_input")
+    x = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons0", min_value=20, max_value=29, step=1),
+        activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
+    )(original_inputs)
+    
+    drop = tf.keras.layers.Dropout(0.01)(x)
+    
+    x1 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons1", min_value=13,
+                     max_value=19, step=1),
+        activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
+    )(drop)
+    x2 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons2", min_value=7, max_value=12, step=1),
+        activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"]),
+    )(x1)
+    latent_dim = hp.Int("num_of_neurons3", min_value=2,
+                        max_value=6, step=1)
+    
+    z_mean = tf.keras.layers.Dense(units=latent_dim)(x2)
+    
+    z_log_var = tf.keras.layers.Dense(
+        units=latent_dim,
+        
+    )(x2)  # activation=hp.Choice("3_act", ["relu", "tanh", "leakyrelu"]),
+    
+    
+    batch = tf.shape(z_mean)[0]
+    dim = tf.shape(z_mean)[1]
+    epsilon = tf.random.normal(shape=(batch, dim), seed=seed)
+    z = z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
-class Encoder(tf.keras.layers.Layer):
-    def __init__(self, hp, name="encoder", **kwargs):
-        super(Encoder, self).__init__(name=name, **kwargs)
-        self.dense_proj = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons0", min_value=20, max_value=29, step=1),
-            input_shape=(30,),
-            activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj1 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons1", min_value=13, max_value=19, step=1),
-            activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj2 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons2", min_value=7, max_value=12, step=1),
-            activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        latent_dim = hp.Int("num_of_neurons3", min_value=2, max_value=6, step=1)
-        self.dense_mean = tf.keras.layers.Dense(units=latent_dim)
-        self.dense_log_var = tf.keras.layers.Dense(
-            units=latent_dim,
-            activation=hp.Choice("3_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.sampling = Sampling()
+    encoder = tf.keras.Model(inputs=original_inputs, outputs=z, name="encoder")
 
-    def call(self, inputs):
-        x = self.dense_proj(inputs)
-        x1 = self.dense_proj1(x)
-        x2 = self.dense_proj2(x1)
-        z_mean = self.dense_mean(x2)
-        z_log_var = self.dense_log_var(x2)
-        z = self.sampling((z_mean, z_log_var))
-        return z_mean, z_log_var, z
-
-
-class Decoder(tf.keras.layers.Layer):
-    def __init__(self, hp, name="decoder", **kwargs):
-        super(Decoder, self).__init__(name=name, **kwargs)
-        self.dense_proj = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons4", min_value=7, max_value=12, step=1),
-            activation=hp.Choice("4_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj1 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons5", min_value=13, max_value=19, step=1),
-            activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_proj2 = tf.keras.layers.Dense(
-            units=hp.Int("num_of_neurons6", min_value=20, max_value=29, step=1),
-            activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
-        )
-        self.dense_output = tf.keras.layers.Dense(
-            units=30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
-        )
-
-    def call(self, inputs):
-        x = self.dense_proj(inputs)
-        x1 = self.dense_proj1(x)
-        x2 = self.dense_proj2(x1)
-        return self.dense_output(x2)
+    # Define decoder model.
+    latent_inputs = tf.keras.Input(shape=(latent_dim,), name="z_sampling")
+    x3 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons4", min_value=7, max_value=12, step=1),
+        activation=hp.Choice("4_act", ["relu", "tanh", "leakyrelu"]),
+    )(latent_inputs)
+    x4 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons5", min_value=13,
+                     max_value=19, step=1),
+        activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
+    )(x3)
+    x5 = tf.keras.layers.Dense(
+        units=hp.Int("num_of_neurons6", min_value=20,
+                     max_value=29, step=1),
+        activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
+    )(x4)
+    dense_output = tf.keras.layers.Dense(
+        units=30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
+    )(x5)
+    
+    decoder=tf.keras.Model(inputs=latent_inputs,
+                            outputs=dense_output, name="decoder")
+    
+    # Define VAE model.
+    outputs = decoder(z)
+    vae = tf.keras.Model(inputs=original_inputs, outputs=outputs, name="vae")
+    
+    kl_loss = -0.5 * \
+        tf.reduce_mean(z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1)
 
 
-class VAE(tf.keras.Model):
-    def __init__(self, hp, name="vae", **kwargs):
-        super(VAE, self).__init__(name=name, **kwargs)
-        self.encoder = Encoder(hp)
-        self.decoder = Decoder(hp)
-
-    def call(self, inputs):
-        z_mean, z_log_var, z = self.encoder(inputs)
-        reconstruction = self.decoder(z)
-
-        # KL divergence
-        kl_loss = -0.5 * tf.reduce_mean(
-            z_log_var - tf.square(z_mean) - tf.exp(z_log_var) + 1
-        )
-        self.add_loss(kl_loss)
-        return reconstruction
-
+    vae.add_loss(kl_loss)
+    
+    return vae
+    
 
 def VAE_model_builder(hp):
 
     VAE_model = VAE(hp)
     hp_learning_rate = hp.Choice("learning_rate", values=[9e-2, 9.5e-2, 1e-3, 1.5e-3])
     optimizer = optimizers.Adam(hp_learning_rate)
-    VAE_model.compile(loss="mse", optimizer=optimizer, metrics=["mse"])
+    VAE_model.compile(loss="mse", optimizer=optimizer ,metrics=["mse"])
 
     return VAE_model
+
 
 
 def gridvae():
@@ -454,14 +458,14 @@ def gridvae():
     tuner = kt.Hyperband(
         VAE_model_builder,
         objective=kt.Objective("val_mse", direction="min"),
-        max_epochs=50,
+        max_epochs=200,
         factor=3,
         directory="GridSearches",
         project_name="VAE",
         overwrite=True,
     )
 
-    tuner.search(X_b, X_b, epochs=50, validation_data=(X_back_test, X_back_test))
+    tuner.search(X_b, X_b, epochs=200, batch_size=4000, validation_data=(X_back_test, X_back_test))
     timer(start_time)
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
@@ -471,7 +475,7 @@ def gridvae():
     First layer has {best_hps.get('num_of_neurons0')} with activation {best_hps.get('0_act')} \n
     Second layer has {best_hps.get('num_of_neurons1')} with activation {best_hps.get('1_act')} \n
     Third layer has {best_hps.get('num_of_neurons2')} with activation {best_hps.get('2_act')} \n
-    Latent layer has {best_hps.get("num_of_neurons3")} with activation {best_hps.get('3_act')} \n
+    Latent layer has {best_hps.get("num_of_neurons3")}  \n
     \n
     For Decoder: \n 
     First layer has {best_hps.get('num_of_neurons4')} with activation {best_hps.get('4_act')}\n
@@ -481,7 +485,7 @@ def gridvae():
     \n
     with learning rate = {best_hps.get('learning_rate')}
     """
-    )
+    )  # with activation {best_hps.get('3_act')}
 
     state = True
     while state == True:
@@ -497,13 +501,13 @@ def gridvae():
 
 
 if __name__ == "__main__":
-    tf.random.set_seed(1)
+    seed = tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 
-    #with tf.device("/CPU:0"):
+    with tf.device("/CPU:0"):
         # gridNN()
-    #    gridautoencoder()
-
-    gridXGBoost()
+        gridautoencoder()
+        #gridvae()
+    # gridXGBoost()
     # gridSVM()
     #decisionTrees()

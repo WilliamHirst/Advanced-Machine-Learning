@@ -10,10 +10,14 @@ from sklearn.metrics import accuracy_score
 import scikitplot as skplt
 from Functions import *
 
+
 # for custom activation function
+from keras import backend as K
 from keras.utils.generic_utils import get_custom_objects
 
+
 get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
+get_custom_objects().update({"self_val": tf.keras.layers.LeakyReLU(alpha=1.0)})
 
 print("Preparing data...")
 tf.random.set_seed(1)
@@ -22,7 +26,7 @@ EventID = X_test[:,0].astype(int)
 X_test = X_test[:,1:]
 
 DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-#DH.removeOutliers(5)
+#DH.removeOutliers(4)
 
 nr_train = DH.nrEvents
 DH.X_train = np.concatenate((DH.X_train, X_test), axis=0)
@@ -39,10 +43,13 @@ DH.X_train = X_train
 X_train, y_train, X_val, y_val, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
 
 
+
 # Get optimal model through previous gridsearch
 print("Fetching optimal parameters...")
 name = "hypermodel_ae"
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
+tf.keras.utils.plot_model(hypermodel, to_file="../figures/AE/ae_model_plot.png", show_shapes=True, show_layer_names=True, expand_nested=True)
+
 """
 # Train to find best epoch
 print("Training model.")
@@ -87,7 +94,7 @@ with tf.device("/CPU:0"):
 """
 with tf.device("/CPU:0"):
     hypermodel.fit(
-        X_train, X_train, epochs=40, batch_size=4000, validation_data=(X_back_test, X_back_test)
+        X_train, X_train, epochs=50, batch_size=4000, validation_data=(X_back_test, X_back_test)
     )
 
 
@@ -97,27 +104,27 @@ with tf.device("/CPU:0"):
 recon_val = hypermodel(X_val)
 err_val = tf.keras.losses.msle(recon_val, X_val).numpy()
 err_val = err_val.reshape(len(err_val), 1)
-#indx = np.where(err_val<np.mean(err_val)+5*np.std(err_val))[0] #Remove outliers in reconstruction.
-indx = np.where(err_val>-1)[0]
+indx = np.where(err_val<np.mean(err_val)+5*np.std(err_val))[0] #Remove outliers in reconstruction.
+#indx = np.where(err_val>-1)[0]
 err_val = err_val[indx]/np.max(err_val[indx])
 
 s = err_val[np.where(y_val[indx] == 1)]
 b = err_val[np.where(y_val[indx] == 0)]
-#s = s[np.where(s<np.mean(s)+5*np.std(s))[0]]
-#b = b[np.where(b<np.mean(b)+5*np.std(b))[0]]
+s = s[np.where(s<np.mean(s)+5*np.std(s))[0]]
+b = b[np.where(b<np.mean(b)+5*np.std(b))[0]]
 
 
 sigma =np.nanstd(b)
 diff = abs(np.mean(b) - np.mean(s))
 x_start = np.mean(b) 
 x_end =np.mean(s) 
-y_start = 8
+y_start = 5
 
 
-threshold = np.mean(b) + np.std(b)
-recon_val_test = hypermodel(X_test)
-proba = tf.keras.losses.msle(recon_val_test, X_test).numpy()
-name = '../Data/Autoencoder_test_pred.csv'
+#threshold = np.mean(b) + np.std(b)
+#recon_val_test = hypermodel(X_test)
+#proba = tf.keras.losses.msle(recon_val_test, X_test).numpy()
+#name = '../Data/Autoencoder_test_pred.csv'
 #write_to_csv(EventID, proba, threshold, name)
 
 binsize = 150
@@ -136,7 +143,7 @@ median_b = bins_b[np.where(n_b==np.max(n_b))][0]
 plt.xlabel("Output", fontsize=15)
 plt.ylabel("#Events", fontsize=15)
 plt.title("Autoencoder output distribution", fontsize=15, fontweight = "bold")
-plt.legend(fontsize = 16, loc = "upper right")
+plt.legend(fontsize = 16, loc = "lower right")
 
 plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
                 + f" = {diff:.3f}",
@@ -146,15 +153,15 @@ plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$"
 plt.annotate(r"$\mid s_m-b_m\mid$"+f" = {abs(median_b-median_s):.3f}", xycoords='data',
                 xy =(0.5, y_start+4.), 
                 fontsize=15.0,textcoords='data',ha='center')
-plt.savefig("../figures/AE/AE_output.pdf", bbox_inches="tight")
+plt.savefig("../figures/AE/AE_output_RO.pdf", bbox_inches="tight")
 plt.show()
 
 
 probas = np.concatenate((1-err_val, err_val),axis=1)
 
 skplt.metrics.plot_roc(y_val[indx], probas)
-plt.xlabel("True positive rate", fontsize=15)
-plt.ylabel("False positive rate", fontsize=15)
+plt.xlabel("False positive rate", fontsize=15)
+plt.ylabel("True positive rate", fontsize=15)
 plt.title("Autoencoder: ROC curve", fontsize=15, fontweight = "bold")
-plt.savefig("../figures/AE/AE_ROC.pdf", bbox_inches="tight")
+plt.savefig("../figures/AE/AE_ROC_RO.pdf", bbox_inches="tight")
 plt.show()

@@ -79,10 +79,10 @@ plt.annotate(text=r"$\mid s_m-b_m\mid$"+f" = {abs(median_b-median_s):.2f}",
 plt.savefig("../figures/XGB/XGB_output.pdf", bbox_inches="tight")
 plt.show()
 
-exit()
+
 skplt.metrics.plot_roc(y_val, probas)
-plt.xlabel("True positive rate", fontsize=15)
-plt.ylabel("False positive rate", fontsize=15)
+plt.xlabel("False positive rate", fontsize=15)
+plt.ylabel("True positive rate", fontsize=15)
 plt.title("XGBoost: ROC curve", fontsize=15, fontweight = "bold")
 plt.savefig("../figures/XGB/XGB_ROC.pdf", bbox_inches="tight")
 plt.show()

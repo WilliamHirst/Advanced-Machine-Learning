@@ -24,23 +24,24 @@ classifier = linear_model.SGDOneClassSVM(nu = 0.01)
 feature_map_nystroem = Nystroem(gamma=.2, random_state=1, n_components=30)
 data_transformed = feature_map_nystroem.fit_transform(X_train)
 classifier.fit(data_transformed) 
+proba = classifier.predict(X_val)
+
+proba = np.asarray([0 if i == -1 else 1 for i in proba])
+#y_val = np.asarray([-1 if i == 0 else 1 for i in y_val])
 
 
-y_val = np.asarray([-1 if i == 0 else 1 for i in y_val])
 
 
 
 
-
-exit()
 s = proba[np.where(y_val == 1)]
 b = proba[np.where(y_val == 0)]
 
 sigma =np.nanstd(b)
 diff = abs(np.mean(b) - np.mean(s))/sigma
-x_start = np.mean(b)
-x_end =np.mean(s)
-y_start = 3
+x_start = np.mean(b) + 0.5
+x_end =np.mean(s) +0.5
+y_start = 15
 binsize = 100
 
 
@@ -51,14 +52,14 @@ plt.xlabel("Output", fontsize=15)
 plt.ylabel("#-of-events", fontsize=15)
 plt.title("SVM output distribution", fontsize=15, fontweight = "bold")
 plt.legend(fontsize = 16)
-plt.annotate("", xy=(x_start,y_start),
-            xytext=(x_end,y_start),verticalalignment="center",
-            arrowprops={'arrowstyle': '|-|', 'lw': 1., "color":"black"}, va='center')
+#plt.annotate("", xy=(x_start,y_start),
+#            xytext=(x_end,y_start),verticalalignment="center",
+#            arrowprops={'arrowstyle': '|-|', 'lw': 1., "color":"black"}, va='center')
             
-plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
-                + f" = {diff:.2f}" + r"$\sigma_b$",
-                xy=(((x_start+x_end)/2), y_start+0.5), xycoords='data',
-                fontsize=15.0,textcoords='data',ha='center')
+#plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
+#                + f" = {diff:.2f}" + r"$\sigma_b$",
+#                xy=(((x_start+x_end)/2), y_start+0.5), xycoords='data',
+#                fontsize=15.0,textcoords='data',ha='center')
 
 plt.savefig("../figures/SVM/SVM_output.pdf", bbox_inches="tight")
 plt.show()
