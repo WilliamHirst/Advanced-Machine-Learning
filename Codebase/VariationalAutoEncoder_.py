@@ -33,8 +33,8 @@ class Encoder(tf.keras.layers.Layer):
         self.dense_proj = tf.keras.layers.Dense(21, activation="leakyrelu")
         self.dense_proj1 = tf.keras.layers.Dense(15, activation="tanh")
         self.dense_proj2 = tf.keras.layers.Dense(8, activation="leakyrelu")
-        self.dense_mean = tf.keras.layers.Dense(4)
-        self.dense_log_var = tf.keras.layers.Dense(4, activation="tanh")
+        self.dense_mean = tf.keras.layers.Dense(7)
+        self.dense_log_var = tf.keras.layers.Dense(7, activation="tanh")
         self.sampling = Sampling()
 
     def call(self, inputs):
@@ -110,7 +110,7 @@ hypermodel = VAE()
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 hypermodel.compile(optimizer, loss = tf.keras.losses.MeanSquaredError())
-hypermodel.fit(X_train, X_train, epochs=20, validation_data=(X_back_test, X_back_test))
+hypermodel.fit(X_train, X_train, epochs=500, batch_size=4000, validation_data=(X_back_test, X_back_test))
 
 
 
@@ -132,7 +132,7 @@ sigma = np.nanstd(b)
 diff = abs(np.mean(b) - np.mean(s))
 x_start = np.mean(b)
 x_end = np.mean(s)
-y_start = 8
+y_start = 5
 
 
 threshold = np.mean(b) + np.std(b)

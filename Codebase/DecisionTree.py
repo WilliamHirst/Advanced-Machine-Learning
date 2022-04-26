@@ -20,18 +20,12 @@ DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 nr_train = DH.nrEvents
 DH.X_train = np.concatenate((DH.X_train, X_test), axis=0)
 DH.setNanToMean()
-DH.standardScale()
 X, Y = DH(include_test=False)
 
 DH.X_train = X[: nr_train,:]
 X_test = X[nr_train:,:]
 DH.split()
 X_train, X_val, y_train, y_val = DH(include_test=True)
-"""
-DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
-DH.setNanToMean()
-DH.split()
-X_train, X_val, y_train, y_val = DH(include_test=True)"""
 
 dirname = os.getcwd()
 filename = os.path.join(dirname, "sklearn_models/model_hypermodelDT.joblib")
@@ -54,8 +48,8 @@ sigma =np.nanstd(b)
 diff = abs(np.mean(b) - np.mean(s))
 x_start = np.mean(b)
 x_end =np.mean(s)
-y_start = 3
-binsize = 100
+y_start = 8
+binsize = 150
 
 
 
@@ -101,7 +95,7 @@ skplt.metrics.plot_roc(y_val, probas)
 plt.xlabel("True positive rate", fontsize=15)
 plt.ylabel("False positive rate", fontsize=15)
 plt.title("Decision tree: ROC curve", fontsize=15, fontweight = "bold")
-plt.savefig("../figures/DT/DT_ROC.pdf", bbox_inches="tight")
+#plt.savefig("../figures/DT/DT_ROC.pdf", bbox_inches="tight")
 plt.show()
 
 
@@ -112,4 +106,3 @@ name = '../Data/DT_test_pred.csv'
 write_to_csv(EventID, proba, threshold, name)
 
 
-print(f"\nValidation accuracy : {score*100:.2f}")

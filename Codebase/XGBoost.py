@@ -17,8 +17,11 @@ X_train, X_val, y_train, y_val = DH(include_test=True)
 dirname = os.getcwd()
 filename = os.path.join(dirname, "sklearn_models/model_hypermodel.joblib")
 model = load(filename)
+print(model.get_xgb_params())
 
+exit()
 score = model.score(X_val,y_val)
+
 
 
 

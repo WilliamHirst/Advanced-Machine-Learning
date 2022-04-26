@@ -34,6 +34,7 @@ name = "hypermodel"
 epochs = 500
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 
+
 # Train to find best epoch
 print("Training model.")
 

@@ -504,6 +504,6 @@ if __name__ == "__main__":
         # gridNN()
     #    gridautoencoder()
 
-    # gridXGBoost()
+    gridXGBoost()
     # gridSVM()
-    decisionTrees()
+    #decisionTrees()
