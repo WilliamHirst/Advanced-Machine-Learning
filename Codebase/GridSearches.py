@@ -13,11 +13,17 @@ import keras_tuner as kt
 from Functions import timer
 
 
+
 # for custom activation function
 from keras import backend as K
 from keras.utils.generic_utils import get_custom_objects
 
-get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.1)})
+
+
+
+get_custom_objects().update({"leakyrelu": tf.keras.layers.LeakyReLU(alpha=0.01)})
+get_custom_objects().update({"self_val": tf.keras.layers.LeakyReLU(alpha=1.0)})
+
 
 def decisionTrees():
     import joblib
@@ -262,6 +268,7 @@ def gridautoencoder():
     DH.setNanToMean()  # DH.fillWithImputer()
     DH.standardScale()
     X_b, y_b, X_all, y_all, X_back_test, X_sig_test = DH.AE_prep(whole_split=True)
+    
 
     start_time = timer(None)
     tuner = kt.Hyperband(
@@ -312,29 +319,29 @@ def AE_model_builder(hp):
     inputs = tf.keras.layers.Input(shape=30, name="encoder_input")
     x = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons0", min_value=17, max_value=30, step=1),
-        activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("0_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(inputs)
     x1 = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons1", min_value=9, max_value=16, step=1),
-        activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("1_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(x)
     val = hp.Int("lat_num", min_value=1, max_value=8, step=1)
     x2 = tf.keras.layers.Dense(
-        units=val, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu"])
+        units=val, activation=hp.Choice("2_act", ["relu", "tanh", "leakyrelu", "self_val"])
     )(x1)
     encoder = tf.keras.Model(inputs, x2, name="encoder")
 
     latent_input = tf.keras.layers.Input(shape=val, name="decoder_input")
     x = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons5", min_value=9, max_value=16, step=1),
-        activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("5_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(latent_input)
     x1 = tf.keras.layers.Dense(
         units=hp.Int("num_of_neurons6", min_value=17, max_value=30, step=1),
-        activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu"]),
+        activation=hp.Choice("6_act", ["relu", "tanh", "leakyrelu", "self_val"]),
     )(x)
     output = tf.keras.layers.Dense(
-        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid"])
+        30, activation=hp.Choice("7_act", ["relu", "tanh", "leakyrelu", "sigmoid", "self_val"])
     )(x1)
     decoder = tf.keras.Model(latent_input, output, name="decoder")
 

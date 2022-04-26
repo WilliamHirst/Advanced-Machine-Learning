@@ -31,10 +31,10 @@ X_train, X_val, y_train, y_val = DH(include_test=True)
 # Get optimal model through previous gridsearch
 print("Fetching optimal parameters...")
 name = "hypermodel"
-epochs = 500
+epochs = 50
 hypermodel = tf.keras.models.load_model(f"../tf_models/model_{name}.h5")
 tf.keras.utils.plot_model(hypermodel, to_file="../figures/Neural_network/model_plot.png", show_shapes=True, show_layer_names=True, expand_nested=True)
-exit()
+
 # Train to find best epoch
 print("Training model.")
 
@@ -118,8 +118,8 @@ plt.show()
 
 
 skplt.metrics.plot_roc(y_val, probas)
-plt.xlabel("True positive rate", fontsize=15)
-plt.ylabel("False positive rate", fontsize=15)
+plt.xlabel("False positive rate", fontsize=15)
+plt.ylabel("True positive rate", fontsize=15)
 plt.title("Neural network: ROC curve", fontsize=15, fontweight = "bold")
 plt.savefig("../figures/Neural_network/NN_ROC.pdf", bbox_inches="tight")
 plt.show()
