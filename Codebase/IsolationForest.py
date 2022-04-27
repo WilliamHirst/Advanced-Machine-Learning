@@ -11,14 +11,25 @@ import scikitplot as skplt
 
 if __name__ == "__main__":
     seed = tf.random.set_seed(1)
+
+    X_test = np.load("../Data/featuresTest.npy")
+    EventID = X_test[:,0].astype(int)
+    X_test = X_test[:,1:]
+
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
     
     nr_train = DH.nrEvents
-
+    DH.X_train = np.concatenate((DH.X_train, X_test), axis=0)
     DH.setNanToMean()
     #DH.standardScale()
-    DH.split()
 
+    X, Y = DH(include_test=False)
+
+    X_train = X[: nr_train,:]
+    X_test = X[nr_train:,:]
+    DH.X_train = X_train
+
+    DH.split()
     X_train, X_val, y_train, y_val = DH(include_test=True)
 
     clf = IsolationForest(random_state=seed).fit(X_train)
@@ -62,7 +73,7 @@ if __name__ == "__main__":
     plt.ylabel("#Events", fontsize=15)
     plt.title("Isolation Forest output distribution", fontsize=15, fontweight = "bold")
     plt.legend(fontsize = 16, loc = "upper right") 
-    plt.savefig("../figures/Cluster/Cluster_output.pdf", bbox_inches="tight")
+    plt.savefig("../figures/Cluster/Cluster_output_u_scale.pdf", bbox_inches="tight")
     plt.show()
 
     print(np.shape(prob))
@@ -72,5 +83,12 @@ if __name__ == "__main__":
     plt.xlabel("False positive rate", fontsize=15)
     plt.ylabel("True positive rate", fontsize=15)
     plt.title("Isolation Forest: ROC curve", fontsize=15, fontweight = "bold")
-    plt.savefig("../figures/Cluster/Cluster_ROC.pdf", bbox_inches="tight")
+    plt.savefig("../figures/Cluster/Cluster_ROC_u_scale.pdf", bbox_inches="tight")
     plt.show()
+
+
+    
+    threshold = 0.85
+    proba = clf.predict(X_test).ravel()
+    name = '../Data/iForest_test_pred_u_scale.csv'
+    write_to_csv(EventID, proba, threshold, name)
