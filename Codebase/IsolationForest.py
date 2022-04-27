@@ -16,7 +16,7 @@ if __name__ == "__main__":
     nr_train = DH.nrEvents
 
     DH.setNanToMean()
-    DH.standardScale()
+    #DH.standardScale()
     DH.split()
 
     X_train, X_val, y_train, y_val = DH(include_test=True)
@@ -27,11 +27,6 @@ if __name__ == "__main__":
     prob = (prob - np.min(prob))/(np.max(prob)-np.min(prob))
     prob = (1 - prob).reshape(len(prob),1)
 
-    print(prediction, np.where(prediction == 1), np.where(prediction == -1))
-
-    #kmeans = KMeans(n_clusters=2, random_state=seed).fit(X_train)
-    
-    #prediction = kmeans.predict(X_val)
 
     s = prob[np.where(y_val == 1)]
     b = prob[np.where(y_val == 0)]
@@ -40,6 +35,7 @@ if __name__ == "__main__":
     diff = abs(np.mean(b) - np.mean(s))
     x_start = np.mean(b) 
     x_end =np.mean(s)
+    y_start = 3
 
     binsize = 150
     plt.figure(num=0, dpi=80, facecolor='w', edgecolor='k')
@@ -54,6 +50,14 @@ if __name__ == "__main__":
     #plt.axvline(x=x_end,linestyle="--", color="black", alpha = 0.6, linewidth = 1)
     #plt.axvline(x=median_s,linestyle="--", color="black",alpha = 0.6, linewidth = 1)
     #plt.axvline(x=median_b,linestyle="--", color="black", alpha = 0.6, linewidth = 1)
+    plt.annotate(text=r"$\mid \langle s \rangle - \langle b \rangle \mid$" 
+                + f" = {diff:.3f}",
+                xy=((0.5), y_start+1.), xycoords='data',
+                fontsize=15.0,textcoords='data',ha='center')
+
+    plt.annotate(r"$\mid s_m-b_m\mid$"+f" = {abs(median_b-median_s):.3f}", xycoords='data',
+                xy =(0.5, y_start+4.), 
+                fontsize=15.0,textcoords='data',ha='center')
     plt.xlabel("Output", fontsize=15)
     plt.ylabel("#Events", fontsize=15)
     plt.title("Isolation Forest output distribution", fontsize=15, fontweight = "bold")
