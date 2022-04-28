@@ -17,9 +17,8 @@ X_train, X_val, y_train, y_val = DH(include_test=True)
 dirname = os.getcwd()
 filename = os.path.join(dirname, "sklearn_models/model_hypermodel.joblib")
 model = load(filename)
-print(model.get_xgb_params())
+#print(model.get_xgb_params())
 
-exit()
 score = model.score(X_val,y_val)
 
 
@@ -86,7 +85,7 @@ plt.ylabel("True positive rate", fontsize=15)
 plt.title("XGBoost: ROC curve", fontsize=15, fontweight = "bold")
 plt.savefig("../figures/XGB/XGB_ROC.pdf", bbox_inches="tight")
 plt.show()
-exit()
+
 X_test = np.load("../Data/featuresTest.npy")
 EventID = X_test[:,0].astype(int)
 proba = model.predict_proba(X_test[:,1:])[:,1]

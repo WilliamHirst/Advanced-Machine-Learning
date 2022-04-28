@@ -88,6 +88,9 @@ def gridXGBoost():
     import joblib
     from joblib import dump, load
     import os
+    from scipy.stats import randint as sp_randint
+    from scipy.stats import uniform as sp_uniform
+    from sklearn.model_selection import RandomizedSearchCV
 
     start_time = timer(None)
     DH.split()
@@ -96,6 +99,7 @@ def gridXGBoost():
     X = np.concatenate((X_train, X_val), axis=0)
     y = np.concatenate((y_train, y_val), axis=0)
 
+    
     xgb = XGBClassifier(
         use_label_encoder=False,
         objective="binary:logistic",
@@ -107,20 +111,26 @@ def gridXGBoost():
         gamma=0.1,
         verbosity=0,
     )
-    params = {
-        "n_estimator": [50, 100, 200, 300, 400, 500],
-        "max_dept": [1, 2, 3, 4, 5, 6],
-        "eta": [1e-1, 5e-2, 1e-2, 5e-3],
-    }
+    param_dist = {"n_estimators": sp_randint(1, 200),
+              "max_depth": sp_randint(1,20),
+              "learning_rate": sp_uniform(0.1,1.0),
+              "gamma": sp_uniform(0,10),
+              "min_child_weight": sp_uniform(0,10),
+              "reg_lambda": sp_uniform(0,10),
+              "reg_alpha": sp_uniform(0,10)
+             }
 
-    pds = PredefinedSplit(test_fold=split_index)
+    random_search = RandomizedSearchCV(xgb, 
+                                   param_distributions=param_dist, 
+                                   n_iter=50,
+                                   verbose=2,
+                                   n_jobs=4,
+                                   cv=3,
+                                   scoring='roc_auc')
+    random_search.fit(X_train, y_train)
 
-    GridSearch = GridSearchCV(
-        xgb, param_grid=params, scoring="roc_auc", cv=pds, verbose=3
-    )
-    GridSearch.fit(X, y)
     timer(start_time)
-    best_model = GridSearch.best_estimator_
+    best_model = random_search.best_estimator_
     best_score = np.sum(np.where(best_model.predict(X_val) == y_val, 1, 0)) / len(X_val)
 
     print("\n Best score:")
@@ -504,10 +514,10 @@ if __name__ == "__main__":
     seed = tf.random.set_seed(1)
     DH = DataHandler("rawFeatures_TR.npy", "rawTargets_TR.npy")
 
-    with tf.device("/CPU:0"):
+    #with tf.device("/CPU:0"):
         # gridNN()
-        gridautoencoder()
+        #gridautoencoder()
         #gridvae()
-    # gridXGBoost()
+    gridXGBoost()
     # gridSVM()
     #decisionTrees()
