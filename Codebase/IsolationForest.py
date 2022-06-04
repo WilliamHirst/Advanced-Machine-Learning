@@ -35,8 +35,9 @@ if __name__ == "__main__":
     clf = IsolationForest(random_state=seed).fit(X_train)
     prediction = clf.predict(X_val)
     prob = clf.decision_function(X_val)
-    prob = (prob - np.min(prob))/(np.max(prob)-np.min(prob))
-    prob = (1 - prob).reshape(len(prob),1)
+    #prob = (prob - np.min(prob))/(np.max(prob)-np.min(prob))
+    #prob = (1 - prob).reshape(len(prob),1)
+    prob = prob.reshape(len(prob), 1)
 
 
     s = prob[np.where(y_val == 1)]
@@ -85,9 +86,20 @@ if __name__ == "__main__":
     plt.title("Isolation Forest: ROC curve", fontsize=15, fontweight = "bold")
     plt.savefig("../figures/Cluster/Cluster_ROC_u_scale.pdf", bbox_inches="tight")
     plt.show()
-
-
     
+    
+    from sklearn.metrics import roc_curve, auc
+
+    print(np.shape(y_val), np.shape(probas))
+    fpr, tpr, thresholds = roc_curve(y_val, prob, pos_label=1)
+    roc_auc = auc(fpr, tpr)
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+            lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+
+    plt.show()
+    exit()
     threshold = 0.85
     proba = clf.predict(X_test).ravel()
     name = '../Data/iForest_test_pred_u_scale.csv'
